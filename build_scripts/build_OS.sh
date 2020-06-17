@@ -44,8 +44,8 @@ echo
 echo "Setup Meson python packages"
 
 sudo apt-get install python3 python3-pip -y
-sudo pip3 install --upgrade pip -y
-sudo pip3 install meson -y
+sudo pip3 install --upgrade pip
+sudo pip3 install meson
 sudo apt-get install ninja-build -y
 
 sleep 1

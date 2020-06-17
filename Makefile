@@ -194,7 +194,7 @@ $(SOCKPROC): $(SOCKPROC_DIR)
 nginx: $(NGINX) $(IDGEN) $(SOCKPROC)
 
 ################################################################################
-# SCPI server
+# SCPI server / Counter server
 ################################################################################
 
 SCPI_PARSER_TAG = fb6979d1926bb6813898012de934eca366d93ff8
@@ -203,6 +203,7 @@ SCPI_PARSER_URL = https://github.com/RedPitaya/scpi-parser/archive/$(SCPI_PARSER
 SCPI_PARSER_TAR = $(DL)/scpi-parser-$(SCPI_PARSER_TAG).tar.gz
 SCPI_SERVER_DIR = scpi-server
 SCPI_PARSER_DIR = $(SCPI_SERVER_DIR)/scpi-parser
+COUNTER_SERVER_DIR = counter-server
 
 .PHONY: scpi
 
@@ -217,6 +218,10 @@ scpi: api $(INSTALL_DIR) $(SCPI_PARSER_DIR)
 	$(MAKE) -C $(SCPI_SERVER_DIR) clean
 	$(MAKE) -C $(SCPI_SERVER_DIR)
 	$(MAKE) -C $(SCPI_SERVER_DIR) install INSTALL_DIR=$(abspath $(INSTALL_DIR))
+	$(MAKE) -C $(COUNTER_SERVER_DIR) clean
+	$(MAKE) -C $(COUNTER_SERVER_DIR)
+	$(MAKE) -C $(COUNTER_SERVER_DIR) install INSTALL_DIR=$(abspath $(INSTALL_DIR))
+	
 
 ################################################################################
 # SDR

@@ -32,7 +32,14 @@ apps-tools/streaming_manager/src/server/targets/server_linux_test/cmake_install.
 apps-tools/updater/daemon
 boot_uboot.bif
 build/
+tmp/
 dl/
+generate_DC/generate_DC
+generate_DC/generate_DC_LO
+scpi-server/scpi-parser/
+scpi-server/scpi-server
+stemlab_vna-*.zip
+streaming_manager-*.zip
 ecosystem-*.zip
 #fpga
 fpga/synReport*
@@ -43,6 +50,8 @@ fpga/prj/*/out
 fpga/prj/*/sdk
 fpga/prj/*/fsm_encoding.os
 fpga/prj/*/usage_statistics*
+fpga/prj/*/project
+fpga/prj/*/*.log
 # Object files
 *.o
 *.ko

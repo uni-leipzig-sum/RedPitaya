@@ -1346,7 +1346,72 @@ int rp_GetLatchTempAlarm(rp_channel_t channel, bool *status);
 int rp_GetRuntimeTempAlarm(rp_channel_t channel, bool *status);
 
 
-float rp_CmnCnvCntToV(uint32_t field_len, uint32_t cnts, float adc_max_v, uint32_t calibScale, int calib_dc_off, float user_dc_off);
+  ///@}
+  /** @name Counter
+   */
+  ///@{
+
+  typedef enum {
+    RP_none = 0, RP_gotoIdle, RP_reset,
+    RP_countImmediately, RP_countTriggered, RP_trigger
+  } rp_counterCmd_t;
+
+  typedef enum {
+    RP_idle = 0, RP_immediateCountingStart,
+    RP_immediateCountingWaitForTimeout,
+    RP_triggeredCountingWaitForTrigger,
+    RP_triggeredCountingStore,
+    RP_triggeredCountingPredelay,
+    RP_triggeredCountingPrestore,
+    RP_triggeredCountingWaitForTimeout
+  } rp_counterState_t;
+
+  static const int RP_COUNTER_NUM_COUNTERS = 2;
+  static const int RP_COUNTER_BINS = 4096;
+
+  int rp_CounterSendCmd(rp_counterCmd_t cmd);
+  int rp_CounterGetState(rp_counterState_t *state);
+  int rp_CounterSetCountingTime(float time);
+  int rp_CounterGetCountingTime(float *time);
+  int rp_CounterGetCounts(uint32_t buffer[RP_COUNTER_NUM_COUNTERS]);
+  int rp_CounterSetNumberOfBins(uint32_t numBins);
+  int rp_CounterGetNumberOfBins(uint32_t *numBins);
+  int rp_CounterSetRepetitions(uint32_t repetitions);
+  int rp_CounterGetRepetitions(uint32_t *repetitions);
+  int rp_CounterSetPredelay(float predelay);
+  int rp_CounterGetPredelay(float *predelay);
+  int rp_CounterSetTriggerConfig(uint32_t triggerMask, uint32_t triggerInvertMask, bool triggerPolarity);
+  int rp_CounterGetTriggerConfig(uint32_t *triggerMask, uint32_t *triggerInvertMask, bool *triggerPolarity);
+  int rp_CounterSetBinsSplitted(bool binsSplitted);
+  int rp_CounterGetBinsSplitted(bool *binsSplitted);
+  int rp_CounterSetGating(bool enabled);
+  int rp_CounterGetGating(bool *enabled);
+  int rp_CounterGetBinAddress(uint32_t *binAddress);
+  int rp_CounterGetRepetitionCounter(uint32_t *repetitionCounter);
+  int rp_CounterGetBinData(uint32_t *buffers[RP_COUNTER_NUM_COUNTERS], uint32_t numBins);
+  int rp_CounterResetBinDataPartially(uint32_t numBins);
+  int rp_CounterResetBinData();
+  int rp_CounterCountSingle(uint32_t counts[RP_COUNTER_NUM_COUNTERS]);
+  int rp_CounterCount(uint32_t *counts[RP_COUNTER_NUM_COUNTERS], uint32_t numCounts);
+  int rp_CounterReset();
+  int rp_CounterSetTriggeredCounting(bool enabled);
+  int rp_CounterGetTriggeredCounting(bool *enabled);
+  int rp_CounterSetGatedCounting(bool enabled);
+  int rp_CounterGetGatedCounting(bool *enabled);
+  int rp_CounterTrigger();
+  int rp_CounterGetDNA(uint32_t *dna);
+  int rp_CounterGetClock(uint32_t *clock);
+  int rp_CounterWaitForState(rp_counterState_t state);
+  int rp_CounterWaitAndReadAndStartCounting(uint32_t counts[RP_COUNTER_NUM_COUNTERS]);
+  int rp_CounterStartAnalogOutput( uint32_t MaxCounts,uint32_t MinCounts);
+  int rp_CounterStopAnalogOutput();
+  int rp_CounterReadMemory(uint32_t addr, uint32_t *result);
+
+  ///@}
+
+
+  float rp_CmnCnvCntToV(uint32_t field_len, uint32_t cnts, float adc_max_v, uint32_t calibScale, int calib_dc_off, float user_dc_off);
+
 
 #ifdef __cplusplus
 }

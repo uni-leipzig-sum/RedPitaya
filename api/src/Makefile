@@ -40,6 +40,7 @@ TARGET=$(SHARED_LIB) $(STATIC_LIB)
 OBJECTS =	common.o \
 		kiss_fft/kiss_fft.c \
 		kiss_fft/kiss_fftr.c \
+		counter.o	\
 		oscilloscope.o \
 		acq_handler.o \
 		generate.o \

@@ -14,6 +14,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+#include <math.h>
+#include "pthread.h" // Needed to generate analog signal from counter
 
 #include "redpitaya/version.h"
 #include "common.h"
@@ -24,6 +27,7 @@
 #include "calib.h"
 #include "generate.h"
 #include "gen_handler.h"
+#include "counter.h"
 
 static char version[50];
 
@@ -40,6 +44,7 @@ int rp_Init()
     ams_Init();
     generate_Init();
     osc_Init();
+    counter_Init();
     // TODO: Place other module initializations here
 
     // Set default configuration per handler
@@ -57,6 +62,7 @@ int rp_CalibInit()
 
 int rp_Release()
 {
+    counter_Release();
     osc_Release();
     generate_Release();
     ams_Release();
@@ -805,3 +811,195 @@ float rp_CmnCnvCntToV(uint32_t field_len, uint32_t cnts, float adc_max_v, uint32
 	return cmn_CnvCntToV(field_len, cnts, adc_max_v, calibScale, calib_dc_off, user_dc_off);
 }
 
+/*
+ * Counter
+ */
+int rp_CounterSendCmd(rp_counterCmd_t cmd) {
+	return counter_SendCmd((counter_control_cmd)cmd);
+}
+int rp_CounterGetState(rp_counterState_t *state) {
+	return counter_GetState((counter_control_state*)state);
+}
+int rp_CounterSetCountingTime(float time) {
+	return counter_SetCountingTime(
+			(uint32_t) ceilf(time * COUNTER_CLOCK_FREQUENCY) - 1);
+}
+int rp_CounterGetCountingTime(float *time) {
+	uint32_t timeCycles;
+	int r = counter_GetCountingTime(&timeCycles);
+	if (r == RP_OK)
+		*time = (timeCycles + 1.f) / COUNTER_CLOCK_FREQUENCY;
+	return r;
+}
+int rp_CounterGetCounts(uint32_t buffer[COUNTER_NUM_COUNTERS]) {
+	return counter_GetCounts(buffer);
+}
+int rp_CounterSetNumberOfBins(uint32_t numBins) {
+	return counter_SetNumberOfBins(numBins);
+}
+int rp_CounterGetNumberOfBins(uint32_t *numBins) {
+	return counter_GetNumberOfBins(numBins);
+}
+int rp_CounterSetRepetitions(uint32_t repetitions) {
+	return counter_SetRepetitions(repetitions);
+}
+int rp_CounterGetRepetitions(uint32_t *repetitions) {
+	return counter_GetRepetitions(repetitions);
+}
+int rp_CounterSetPredelay(float predelay) {
+	return counter_SetPredelay(
+			(uint32_t) ceilf(predelay * COUNTER_CLOCK_FREQUENCY));
+}
+int rp_CounterGetPredelay(float *predelay) {
+	uint32_t predelayCycles;
+	int r = counter_GetPredelay(&predelayCycles);
+	if (r == RP_OK)
+		*predelay = (predelayCycles * 1.f) / COUNTER_CLOCK_FREQUENCY;
+	return r;
+}
+int rp_CounterSetTriggerConfig(uint32_t triggerMask, uint32_t triggerInvertMask, bool triggerPolarity) {
+	int r = counter_SetTriggerMask(triggerMask);
+	if (r != RP_OK)
+		return r;
+	r = counter_SetTriggerInvertMask(triggerInvertMask);
+	if (r != RP_OK)
+		return r;
+	return counter_SetTriggerPolarity(triggerPolarity);
+}
+int rp_CounterGetTriggerConfig(uint32_t *triggerMask, uint32_t *triggerInvertMask, bool *triggerPolarity) {
+	int r = counter_GetTriggerMask(triggerMask);
+	if (r != RP_OK)
+		return r;
+	r = counter_GetTriggerInvertMask(triggerInvertMask);
+	if (r != RP_OK)
+		return r;
+	return counter_GetTriggerPolarity(triggerPolarity);
+}
+int rp_CounterSetBinsSplitted(bool binsSplitted) {
+	return counter_SetBinsSplitted(binsSplitted);
+}
+int rp_CounterGetBinsSplitted(bool *binsSplitted) {
+	return counter_GetBinsSplitted(binsSplitted);
+}
+int rp_CounterSetGating(bool enabled) {
+	return counter_SetGatedCounting(enabled);
+}
+int rp_CounterGetGating(bool *enabled) {
+	return counter_GetGatedCounting(enabled);
+}
+int rp_CounterGetBinAddress(uint32_t *binAddress) {
+	return counter_GetBinAddress(binAddress);
+}
+int rp_CounterGetRepetitionCounter(uint32_t *repetitionCounter) {
+	return counter_GetRepetitionCounter(repetitionCounter);
+}
+int rp_CounterGetBinData(uint32_t *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
+	return counter_GetBinData(buffers, numBins);
+}
+int rp_CounterResetBinDataPartially(uint32_t numBins) {
+	return counter_ResetBinDataPartially(numBins);
+}
+int rp_CounterResetBinData() {
+	return counter_ResetBinData();
+}
+int rp_CounterCountSingle(uint32_t counts[COUNTER_NUM_COUNTERS]) {
+	return counter_CountSingle(counts);
+}
+int rp_CounterCount(uint32_t *counts[COUNTER_NUM_COUNTERS], uint32_t numCounts) {
+	return counter_Count(counts,numCounts);
+}
+int rp_CounterReset() {
+	return counter_Reset();
+}
+int rp_CounterSetTriggeredCounting(bool enabled) {
+	return counter_SetTriggeredCounting(enabled);
+}
+int rp_CounterGetTriggeredCounting(bool *enabled) {
+	return counter_GetTriggeredCounting(enabled);
+}
+int rp_CounterSetGatedCounting(bool enabled) {
+	return counter_SetGatedCounting(enabled);
+}
+int rp_CounterGetGatedCounting(bool *enabled) {
+	return counter_GetGatedCounting(enabled);
+}
+int rp_CounterTrigger() {
+	return counter_Trigger();
+}
+int rp_CounterGetDNA(uint32_t *dna) {
+	return counter_GetDNA(dna);
+}
+int rp_CounterGetClock(uint32_t *clock) {
+	return counter_GetClock(clock);
+}
+int rp_CounterWaitForState(rp_counterState_t state) {
+	return counter_WaitForState(state);
+}
+int rp_CounterWaitAndReadAndStartCounting(uint32_t counts[COUNTER_NUM_COUNTERS]) {
+	return counter_WaitAndReadAndStartCounting(counts);
+}
+
+struct CounterOutputParam {
+	pthread_t thread;
+	int running;
+	uint32_t MaxCounts;
+	uint32_t MinCounts;
+};
+
+static volatile struct CounterOutputParam CounterOutputParam =
+	{0,0,100,0};
+
+void *CountsOutput(void *args) {
+	float countingTime;
+	rp_CounterGetCountingTime(&countingTime);
+	rp_GenFreq(RP_CH_1, 0.f);
+	rp_GenAmp(RP_CH_1, 0.f);
+	rp_GenOutEnable(RP_CH_1);
+	while (CounterOutputParam.running == 1) {
+		uint32_t counts[COUNTER_NUM_COUNTERS];
+		counter_WaitAndReadAndStartCounting(counts);
+		float countrate = 0;
+		for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) {
+			countrate += counts[i] / countingTime;
+		}
+		if (CounterOutputParam.MaxCounts < countrate) {
+			countrate = CounterOutputParam.MaxCounts;
+		}
+		if (CounterOutputParam.MinCounts > countrate) {
+			countrate = CounterOutputParam.MinCounts;
+		}
+
+		for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) {
+			countrate += counts[i] / countingTime;
+		}
+		if (CounterOutputParam.MaxCounts < countrate) {
+			countrate = CounterOutputParam.MaxCounts;
+		}
+		if (CounterOutputParam.MinCounts > countrate) {
+			countrate = CounterOutputParam.MinCounts;
+		}
+
+		float value = (2 * (countrate - CounterOutputParam.MinCounts)
+				/ (CounterOutputParam.MaxCounts - CounterOutputParam.MinCounts)
+				- 1); // calculate the offset voltage from counts (max/min +/-1V)
+		rp_GenOffset(RP_CH_1, value);
+	}
+	return NULL;
+}
+
+int rp_CounterStartAnalogOutput( uint32_t MaxCount, uint32_t MinCount) {
+	CounterOutputParam.running=1;
+	CounterOutputParam.MaxCounts=MaxCount; // max expected count number for scaling the output
+	CounterOutputParam.MinCounts=MinCount;
+	return pthread_create((pthread_t*restrict)&CounterOutputParam.thread,NULL,CountsOutput,0);
+}
+
+int rp_CounterStopAnalogOutput() {
+	CounterOutputParam.running=0;
+	rp_GenOutDisable(RP_CH_1);
+	return RP_OK;
+}
+
+int rp_CounterReadMemory(uint32_t addr, uint32_t *result) {
+	return counter_ReadMemory(addr, result);
+}

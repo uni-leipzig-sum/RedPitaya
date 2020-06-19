@@ -520,19 +520,20 @@ red_pitaya_pid i_pid (
 // counter
 ////////////////////////////////////////////////////////////////////////////////
 
-red_pitaya_counter i_counter (
-  // signals
-  .clk_i         (adc_clk     ),
-  .rstn_i        (adc_rstn    ),
-  .inputs        ({gpio.i[14], gpio.i[22], gpio.i[15], gpio.i[23]}),
-  // System bus
-  .sys_addr      (sys[5].addr ),
-  .sys_wdata     (sys[5].wdata),
-  .sys_wen       (sys[5].wen  ),
-  .sys_ren       (sys[5].ren  ),
-  .sys_rdata     (sys[5].rdata),
-  .sys_err       (sys[5].err  ),
-  .sys_ack       (sys[5].ack  )
-);
+red_pitaya_counter i_counter #(.NINPUTS(4), .NCOUNTERS(2))
+   (
+    // signals
+    .clk_i         (adc_clk     ),
+    .rstn_i        (adc_rstn    ),
+    .inputs        ({gpio.i[14], gpio.i[22], gpio.i[15], gpio.i[23]}),
+    // System bus
+    .sys_addr      (sys[5].addr ),
+    .sys_wdata     (sys[5].wdata),
+    .sys_wen       (sys[5].wen  ),
+    .sys_ren       (sys[5].ren  ),
+    .sys_rdata     (sys[5].rdata),
+    .sys_err       (sys[5].err  ),
+    .sys_ack       (sys[5].ack  )
+    );
 
 endmodule: red_pitaya_top

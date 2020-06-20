@@ -520,11 +520,11 @@ red_pitaya_pid i_pid (
 // counter
 ////////////////////////////////////////////////////////////////////////////////
 
-red_pitaya_counter i_counter #(.NINPUTS(4), .NCOUNTERS(2))
+red_pitaya_counter i_counter 
    (
     // signals
-    .clk_i         (adc_clk     ),
-    .rstn_i        (adc_rstn    ),
+    .i_clk         (adc_clk     ),
+    .i_rstn        (adc_rstn    ),
     .inputs        ({gpio.i[14], gpio.i[22], gpio.i[15], gpio.i[23]}),
     // System bus
     .sys_addr      (sys[5].addr ),

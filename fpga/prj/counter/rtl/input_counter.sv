@@ -3,28 +3,37 @@
  * Resets o_count when i_reset is high.
  */
 
-module input_counter (input i_signal, i_clk, i_gate, i_reset, output buf [32-1:0] o_count);
+module input_counter (
+   input logic i_signal,
+   input logic i_clk,
+   input logic i_gate,
+   input logic i_reset,
+   output logic [32-1:0] o_count
+);
+
    logic input_buffer;
    logic input_ack;
    logic edge_detected;
+   logic [32-1:0] counts;
 
-   always_ff @(posedge i_signal, input_ack) begin
-      if (input_ack) input_buffer <= '0;
-      else if ((posedge i_signal) and gate) input_buffer <= '1;
-   end
+   assign o_count = counts;
 
-   always_ff @(posedge clk) begin
+   always_ff @(posedge i_clk) begin
+      if (!input_ack && i_signal && i_gate) begin
+         input_buffer <= '1;
+      end
       if (input_ack) begin
          input_ack <= '0;
+         input_buffer <= '0;
          edge_detected = '1;
       end else begin
          input_ack <= input_buffer;
          edge_detected = '0;
       end
-      if (reset)
-        o_count <= '0;
+      if (i_reset)
+        counts <= '0;
       else if (edge_detected)
-        o_count <= o_count + 1;
+        counts <= counts + 1;
    end // always_ff @ (posedge clk)
 
 endmodule

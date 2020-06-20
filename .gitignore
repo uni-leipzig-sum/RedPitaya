@@ -48,6 +48,7 @@ fpga/prj/*/.Xil
 fpga/prj/*/.srcs
 fpga/prj/*/out
 fpga/prj/*/sdk
+fpga/prj/*/sim/work
 fpga/prj/*/fsm_encoding.os
 fpga/prj/*/usage_statistics*
 fpga/prj/*/project

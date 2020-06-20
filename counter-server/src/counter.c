@@ -809,3 +809,44 @@ int Counter_ReadMemory(int argc, char **argv, char **res, size_t *resLen)
 	return 1;
 	*/
 }
+
+int Counter_GetDebugMode(int argc, char **argv, char **res, size_t *resLen)
+{
+	bool enabled;
+	int result = rp_CounterGetDebugMode(&enabled);
+	if (RP_OK != result) {
+		RP_LOG(LOG_ERR, "COUNTER:DEBUG? Failed to get debug mode: %s.\n", rp_GetError(result));
+		*resLen = safe_sprintf(res, "ERR: %s", rp_GetError(result));
+		return 1;
+	}
+
+	*resLen = safe_sprintf(res, "%d", enabled);
+	if (*resLen < 0) {
+		RP_LOG(LOG_ERR, "COUNTER:TIME? Failed to construct response. Out of memory?\n");
+		*resLen = safe_sprintf(res, "ERR: OOM?");
+		return 1;
+	}
+	return 0;
+}
+
+int Counter_SetDebugMode(int argc, char **argv, char **res, size_t *resLen)
+{
+	*res = NULL;
+	*resLen = 0;
+
+	bool enabled;
+	if (argc < 1) {
+		RP_LOG(LOG_ERR, "COUNTER:DEBUG is missing first argument.\n");
+		*resLen = safe_sprintf(res, "ERR: Specify whether to enable debug mode (1 or 0).");
+		return 1;
+	}
+	enabled = !!atoi(argv[0]);
+	int result = rp_CounterSetDebugMode(enabled);
+	if (RP_OK != result) {
+		RP_LOG(LOG_ERR, "COUNTER:DEBUG Failed to set debug mode: %s.\n", rp_GetError(result));
+		*resLen = safe_sprintf(res, "ERR: %s", rp_GetError(result));
+		return 1;
+	}
+	*resLen = safe_sprintf(res, "OK");
+	return 0;
+}

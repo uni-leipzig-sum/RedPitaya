@@ -16,7 +16,7 @@ SUBMODULE_APP = ""
 
 define GREET_MSG
 ##############################################################################
-# Red Pitaya GNU/Linux Ecosystem
+# Red Pitaya GNU/Linux Ecosystem (with photo counter patches)
 # Version: $(VER)
 # Build: $(BUILD_NUMBER)
 # Branch: $(GIT_LOCAL_BRANCH)
@@ -82,9 +82,10 @@ UBOOT_CFLAGS = "-O2 -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard"
 # FPGA build provides: $(FSBL), $(FPGA), $(DEVICETREE).
 ################################################################################
 
-FPGA_PRJ_LST = classic counter logic v0.94 mercury axi4lite
+FPGA_PRJ_LST = classic counter # logic v0.94 mercury axi4lite
+FPGA_PRJ = counter
 #FPGA_PRJ_LST = classic logic v0.94 mercury
-FPGA_PRJ = logic
+#FPGA_PRJ = logic
 FPGA_MODEL ?= Z10
 
 .PHONY: fpga

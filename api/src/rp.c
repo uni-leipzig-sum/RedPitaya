@@ -1003,3 +1003,11 @@ int rp_CounterStopAnalogOutput() {
 int rp_CounterReadMemory(uint32_t addr, uint32_t *result) {
 	return counter_ReadMemory(addr, result);
 }
+
+int rp_CounterSetDebugMode(bool enabled) {
+  return counter_SetDebugMode(enabled);
+}
+
+int rp_CounterGetDebugMode(bool *enabled) {
+  return counter_GetDebugMode(enabled);
+}

@@ -1,6 +1,37 @@
 /**
- * The redpitaya counter module.
- * 
+ * The main redpitaya counter module.
+ *
+ * @author Lukas Botsch <lukas.botsch@uni-leipzig.de>
+ */
+
+/**
+ * System bus address layout:
+ *
+ * +------------+-----+------------------------------+
+ * | Addr       | R/W | Description                  |
+ * +------------+-----+------------------------------+
+ * | 0x00000000 | RW  | send cmd / get current state |
+ * | 0x00000004 | RW  | timeout                      |
+ * | 0x00000008 | R   | last count ch 1              |
+ * | 0x0000000C | R   | last count ch 2              |
+ * | 0x00000010 | RW  | number of bins in use        |
+ * | 0x00000014 | RW  | number of bin repetitions    |
+ * | 0x00000018 | RW  | predelay                     |
+ * | 0x0000001C | RW  | trigger config               |
+ * | 0x00000020 | R   | current bin index            |
+ * | 0x00000024 | R   | current repetition index     |
+ * | 0x00000028 | R   | DNA                          |
+ * | 0x0000002C | R   | debug clock                  |
+ * | 0x00000030 | RW  | debug mode                   |
+ * +------------+-----+------------------------------+
+ * | ...        |     |                              |
+ * +------------+-----+------------------------------+
+ * | 0x00010000 | RW  | bin data ch1                 |
+ * | ...        |     |                              |
+ * +------------+-----+------------------------------+
+ * | 0x00014000 | RW  | bin data ch2                 |
+ * | ...        |     |                              |
+ * +------------+-----+------------------------------+
  */
 
 module red_pitaya_counter
@@ -12,18 +43,19 @@ module red_pitaya_counter
     )
    (
     // Inputs
-    input logic               i_clk,
-    input logic               i_rstn,
+    input logic                  i_clk,
+    input logic                  i_rstn,
     input logic [num_inputs-1:0] inputs,
+    output logic [8-1:0]         o_led,
 
     // System bus
-    input logic [ 32-1: 0]    sys_addr, // bus saddress
-    input logic [ 32-1: 0]    sys_wdata, // bus write data
-    input logic               sys_wen, // bus write enable
-    input logic               sys_ren, // bus read enable
-    output logic [ 32-1: 0]   sys_rdata, // bus read data
-    output logic              sys_err, // bus error indicator
-    output logic              sys_ack   // bus acknowledge signal
+    input logic [ 32-1: 0]       sys_addr, // bus saddress
+    input logic [ 32-1: 0]       sys_wdata, // bus write data
+    input logic                  sys_wen, // bus write enable
+    input logic                  sys_ren, // bus read enable
+    output logic [ 32-1: 0]      sys_rdata, // bus read data
+    output logic                 sys_err, // bus error indicator
+    output logic                 sys_ack   // bus acknowledge signal
     );
 
    typedef enum {
@@ -51,6 +83,16 @@ module red_pitaya_counter
          } control_command_t;
 
    logic [32-1:0]            debug_clock;
+   logic                     debug_mode;
+
+   /* Debug mode:
+    * In debug mode, we map the input signals 1-4 onto leds 5-8 respectively.
+    * This allows to visually debug the input signals.
+    */
+   generate
+      for (genvar i = 0; i < 4; i++)
+        assign o_led[4+i] = (debug_mode) ? inputs[i] : 1'b0;
+   endgenerate
 
    // --- Counter logic ---
    // Clock for predelay and timeout
@@ -200,7 +242,7 @@ module red_pitaya_counter
 
          counter_state <= idle;
          control_command <= none;
-         
+
          sys_ack <= '0;
          sys_err <= '0;
          sw_counter_ram_id <= '0;
@@ -413,6 +455,7 @@ module red_pitaya_counter
                     //counter_split_bins <= sys_wdata[17];
                     counter_gating_activated <= sys_wdata[18];
                  end
+                 'h0030: debug_mode <= sys_wdata[0];
                  default: begin
                     sys_ack <= '0;
                     sys_err <= '1;
@@ -466,6 +509,7 @@ module red_pitaya_counter
                  'h0024: sys_rdata_buf <= {16'b0, bin_repetition_index};
                  'h0028: sys_rdata_buf <= DNA;
                  'h002C: sys_rdata_buf <= debug_clock;
+                 'h0030: sys_rdata_buf <= debug_mode;
                  default: sys_rdata_buf <= 'h00000000;
                endcase
             end // if (sys_ren)

@@ -273,3 +273,11 @@ int counter_ReadMemory(uint32_t addr, uint32_t *result) {
 	return cmn_GetValue((uint32_t*)(((void*)counter_reg)+addr), result, 0xFFFFFFFFL);
 }
 
+int counter_SetDebugMode(bool enabled) {
+  return cmn_SetValue(&counter_reg->debug_mode, enabled ? 1 : 0,
+                      COUNTER_REG_DEBUG_MODE_MASK);
+}
+int counter_GetDebugMode(bool *enabled) {
+  return cmn_GetValue(&counter_reg->debug_mode, (uint32_t*) enabled,
+                      COUNTER_REG_DEBUG_MODE_MASK);
+}

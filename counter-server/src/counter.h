@@ -62,5 +62,7 @@ int Counter_AnalogOutput(int argc, char **argv, char **res, size_t *resLen);
 
 /* For debugging purposes only! */
 int Counter_ReadMemory(int argc, char **argv, char **res, size_t *resLen);
+int Counter_GetDebugMode(int argc, char **argv, char **res, size_t *resLen);
+int Counter_SetDebugMode(int argc, char **argv, char **res, size_t *resLen);
 
 #endif /* COUNTER_H */

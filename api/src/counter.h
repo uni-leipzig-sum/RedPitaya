@@ -41,6 +41,7 @@ static const int COUNTER_REG_PREDELAY_OFFSET	= 0x0018;
 static const int COUNTER_REG_CONFIG_OFFSET		= 0x001C;
 static const int COUNTER_REG_ADDRESS_OFFSET		= 0x0020;		// read-only
 static const int COUNTER_REG_REPETITION_OFFSET	= 0x0024;			// read-only
+static const int COUNTER_REG_DEBUG_MODE_OFFSET = 0x0030;
 
 static const int COUNTER_REG_CONTROL_MASK		= 0x0000000F;
 static const int COUNTER_REG_TIMEOUT_MASK		= 0xFFFFFFFF;
@@ -53,6 +54,7 @@ static const int COUNTER_REG_ADDRESS_MASK		= 0x00001FFF;
 static const int COUNTER_REG_REPETITION_MASK	= 0x0000FFFF;
 static const int COUNTER_REG_DNA_MASK			= 0xFFFFFFFF;
 static const int COUNTER_REG_CLOCK_MASK			= 0xFFFFFFFF;
+static const int COUNTER_REG_DEBUG_MODE_MASK = 0x00000001;
 
 static const int COUNTER_CONFIG_TRIGGER_MASK_MASK			= 0x0000000F;
 static const int COUNTER_CONFIG_TRIGGER_MASK_BIT_OFFSET		= 0;
@@ -77,6 +79,7 @@ typedef struct counter_control_s {
 	uint32_t repetition;						// read-only
 	uint32_t dna;								// read-only
 	uint32_t clock;								// read-only
+  uint32_t debug_mode;
 } counter_control_t;
 
 typedef enum {
@@ -119,6 +122,8 @@ int counter_SetTriggerInvertMask(uint32_t triggerInvertMask);
 int counter_GetTriggerInvertMask(uint32_t *triggerInvertMask);
 int counter_SetTriggerPolarity(bool triggerPolarityInverted);
 int counter_GetTriggerPolarity(bool *triggerPolarityInverted);
+int counter_SetBinsSplitted(bool binsSplitted);
+int counter_GetBinsSplitted(bool *binsSplitted);
 int counter_SetTriggeredCounting(bool enabled);
 int counter_GetTriggeredCounting(bool *enabled);
 int counter_Trigger();
@@ -140,5 +145,7 @@ int counter_WaitForState(counter_control_state state);
 int counter_WaitAndReadAndStartCounting(uint32_t counts[COUNTER_NUM_COUNTERS]);
 
 int counter_ReadMemory(uint32_t addr, uint32_t *result);
+int counter_SetDebugMode(bool enabled);
+int counter_GetDebugMode(bool *enabled);
 
 #endif

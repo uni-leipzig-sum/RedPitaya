@@ -132,6 +132,11 @@ static command_map_t counter_commands[] = {
   { .cmd = "COUNTER:OUTPUT",      .handler = Counter_AnalogOutput,},
   /* Reads from the counter mapped memory. Needs the address as unsigned int as argument. */
   { .cmd = "COUNTER:READMEM?",     .handler = Counter_ReadMemory,},
+  /* Sets debug mode. In debug mode, the input signals 1-4 are mapped onto LEDs 5-8. */
+  { .cmd = "COUNTER:DEBUG",        .handler = Counter_SetDebugMode,},
+  /* Gets debug mode. In debug mode, the input signals 1-4 are mapped onto LEDs 5-8. */
+  { .cmd = "COUNTER:DEBUG?",       .handler = Counter_GetDebugMode,},
+
   COMMAND_MAP_END
 };
 

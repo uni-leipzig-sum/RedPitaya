@@ -1406,7 +1406,8 @@ int rp_GetRuntimeTempAlarm(rp_channel_t channel, bool *status);
   int rp_CounterStartAnalogOutput( uint32_t MaxCounts,uint32_t MinCounts);
   int rp_CounterStopAnalogOutput();
   int rp_CounterReadMemory(uint32_t addr, uint32_t *result);
-
+  int rp_CounterSetDebugMode(bool enabled);
+  int rp_CounterGetDebugMode(bool *enabled);
   ///@}
 
 

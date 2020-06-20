@@ -50,10 +50,8 @@ LDFLAGS=
 
 # Additional libraries which needs to be dynamically linked to the executable
 # -lm - System math library (used by cos(), sin(), sqrt(), ... functions)
-LIBPATH= -L /opt/redpitaya/lib
+LIBPATH= -L ../../api/lib
 LIBS= -lm -lpthread -lrp
-
-INC= -I/opt/redpitaya/include
 
 # Main GCC executable (used for compiling and linking)
 CC=$(CROSS_COMPILE)gcc
@@ -68,7 +66,7 @@ all: $(TARGET)
 # objects (.o) files.
 $(OBJECTS_DIR)/%.o:$(SOURCE_DIR)/%.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) $(INC) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 # Makefile target with rules how to link executable for each target from $(TARGET)
 # list.

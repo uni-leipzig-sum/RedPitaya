@@ -1,60 +1,117 @@
-The previous README file is available [here](doc/developer.rst).
+# RedPitaya Operating System
 
-Work in progress documentation <http://redpitaya.readthedocs.io/en/latest/index.html>.
 
-# CALL FOR DEVELOPERS
+## Prerequisits
 
-Our internal development is shifting toward [Jupyter](http://jupyter.org/).
-Jupyter with a set of Python modules provides a great tool for quick prototyping:
-1. UIO drivers written directly in Python,
-2. dynamic and interactive data visualization with [bokeh](http://bokeh.pydata.org),
-3. data storage and processing with [numpy](http://www.numpy.org/), [scipy](https://www.scipy.org/), ...
-4. source code management with Git and [GitHub](https://github.com/blog/1995-github-jupyter-notebooks-3),
-5. and under development is support for device tree overlays and FPGA manager.
+In order to build the SD card image for the Red Pitaya Counter, you need a host
+computer running Ubuntu 16.04. The easiest way to get one is by running a
+virtual machine in VirtualBox.
 
-## 1. UIO (Userspace IO) drivers in Python
-Drivers for FPGA memory mapped peripherals can be written directly in Python using
-[mmap](https://docs.python.org/2/library/mmap.html), [ctypes](https://docs.python.org/3/library/ctypes.html)
-and [numpy](http://www.numpy.org/).
-[UIO description in a device tree](https://github.com/RedPitaya/RedPitaya/blob/mercury/jupyter/experiments/mercury.dts)
-in combination with [UDEV rules](https://github.com/RedPitaya/RedPitaya/blob/mercury/OS/debian/overlay/etc/udev/rules.d/10-redpitaya.rules#L7)
-provides named UIO devices as `/dev/uio/name`.
-Each device can be mapped into memory space and locked separately with
-[mmap](https://docs.python.org/2/library/mmap.html) and
-[fcntl](https://docs.python.org/3.6/library/fcntl.html).
-Register sets can be written using Python ctypes and/or
-[numpy.dtpye](https://docs.scipy.org/doc/numpy/reference/generated/numpy.dtype.html).
-Python offers language features for the creation of elegant APIs.
+Install VirtualBox ([https://www.virtualbox.org/]), e.g. on Ubuntu:
 
-## 2. Dynamic and interactive data visualization
-As a base [Matplotlib](http://matplotlib.org/) provides a vast array of features for data visualization.
-With the addition of [bokeh](http://bokeh.pydata.org) (JavaScript based library) visualization become dynamic
-with good frame rates (up to about 16fps depending on data size).
-There are widget libraries available for making interactive applications.
+```bash
+$ sudo apt-get install virtualbox
+```
 
-## 3. Data storage and digital signal processing
-Python makes it easy to store data into a file, since the application is also written in Python,
-it easy to access data from various processing changes not just a filtered output.
-A simple data logger for example can write data file onto the SD card,
-the file can be later loaded onto a PC using the Jupyter file browser.
-Python is interpreted in Jupyter, which makes it slow.
-Fortunately most data processing can be done on arrays with dedicated libraries.
-Numpy and Scipy provide processing functions for a great spectrum of applications.
-They are well optimized although not very fast on the ZYNQ ARM CPU.
-Python wrappers can be written around optimized DSP libraries like [Ne10](https://projectne10.github.io/Ne10/).
-Processing can also be offloaded to the FPGA, project [PYNQ](https://github.com/Xilinx/PYNQ/) is making progress there.
+Setup a virtual machine with at least 4GB of ram and 2 CPU cores and install
+Ubuntu 16.04. Alternatively, download a ready made virtual machine image from
+e.g. [https://www.osboxes.org/ubuntu/].
 
-## 4. Git and GitHub
-Applications can be developed directly on the board and edited in the Jupyter editor.
-Git is now installed on SD card images.
-In combination with Github it provides a great tool for version control,
-publishing and distribution of Python applications and libraries.
-TODO: under Welcome instructions for Git SSH keys, maybe they should be created at first boot and displayed.
+Start the virtual machine, log in, you are all set.
 
-## 5. Device tree overlays and FPGA manager
-Device tree overlays are already supported on our current 4.4 based kernel.
-We are working on a kernel 4.9 based version, which would also support FPGA manager.
-FPGA manager enables loading a FPGA bitstream with an overlay,
-which enables proper loading and unloading of kernel drivers (GPIO, LED, XADC, DMA, ...)
-needed by the overlay.
-Most of our problems are related to backward compatibility.
+## Installing FPGA development tools
+
+In order to build the FPGA code, you need the Vivado build tools from Xilinx. In
+order to get them, you will need to register with Xilinx and accept their
+license agreement. There is a free (as in you don't have to pay anything)
+edition of the Vivado HL Suite called WebPack.
+*Important: we need the version 2017.2!*
+
+Go download the _Vivado HLx 2017.2: WebPACK and Editions - Linux Self Extracting
+Web Installer_ (MD5 SUM Value : eaee62b9dd33d97955dd77694ed1ba20, size: 85.24
+MB) from here:
+[https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive.html]
+and install it with the command
+
+```bash
+chmod +x Xilinx_Vivado_SDK_2017.2_0616_1_Lin64.bin
+sudo ./Xilinx_Vivado_SDK_2017.2_0616_1_Lin64.bin
+```
+
+*Important: Install Vivado into the default location /opt/Xilinx/*
+
+## Installing other build tools
+
+You will need other tools on your freshly made virtual machine. First of all,
+you will need _git_ in order to download this repository. Run:
+
+```bash
+sudo apt-get install git
+git clone https://github.com/uni-leipzig-sum/RedPitaya.git ~/RedPitaya
+sudo apt-get install debootstrap qemu-user-static
+```
+
+## Build the Red Pitaya ecosystem
+
+The RedPitaya OS is built in two parts:
+- The ecosystem: Contains the linux kernel image, FPGA bitstream, tools, etc.
+- The OS userspace: Contains Ubuntu 16.04 userspace with some usefull packages preinstalled
+  
+You first have to build the ecosystem in order to build the userspace. This will
+take quite some time. Simply run the following command:
+
+```bash
+cd ~/RedPitaya/build_scripts
+sudo ./build_Z10.sh
+```
+
+Go take a coffee, as this will take some time. I mean it!
+
+## Building the OS userspace and SD card image
+
+If everything went smoothly, you should now have a file called something like
+`ecosystem-XXX.zip` in the ~/RedPitaya directory. It's time to build the SD card
+image. Run the following commands:
+
+```bash
+cd ~/RedPitaya
+sudo OS/debian/image.sh
+```
+
+Once the script is done, you should have a file called `redpitaya_OS_XXX.img` in
+the ~/RedPitaya directory. This is the SD card image! You are almost done.
+
+The last remaining step consists in burning the image to a physical SD card.
+This should be done outside the virtual machine, as accessing the SD card from
+within it is a pain. One more thing needs to be done before you can shut down
+the virtual machine: you need to transfer the SD image you just created to your
+physical host computer. In VirtualBox, this can easily be done using shared
+folders.
+
+## Burning the SD card image onto a card
+
+For this step you will need two more things:
+- A microSD card with at least 4GB capacity
+- A microSD reader/writer
+
+Plug-in the microSD card into the reader. If your operating system recognizes
+the SD card and mounts an existing filesystem, unmount it before you proceed.
+
+If the SD card you are using already contains a RedPitaya image, you should
+probably make a backup, just in case. Run the following command in order to make
+a backup of a preexisting image:
+```bash
+BACKUP_PATH="~/CHANGE_THIS_TO_SOME_BACKUP_LOCATION/"
+mkdir -p $BACKUP_PATH
+sudo dd bs=4M if=/dev/mmcblk0 of=$BACKUP_PATH/redpitaya_OS_backup.img
+```
+
+Note: Change the path to something more suited to hold a backup ;)
+
+Now you can burn your freshly made image onto the microSD card:
+```bash
+sudo dd bs=4M if=/PATH/TO/THE/IMAGE/redpitaya_OS_XXX.img of=/dev/mmcblk0
+```
+
+After some time (depending on the quality of the SD card), the microSD card is
+ready to be used. Insert it into the RedPitaya and off you go.

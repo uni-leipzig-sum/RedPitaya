@@ -38,6 +38,7 @@ RTL = $(RTL_PKG) $(RTL_DIF)
 
 # testbench files
 TBN_PKG =$(wildcard $(PATH_TBN)/*_pkg.sv)
+TBN_PKG+=$(wildcard ../../../tbn/*_pkg.sv)
 TBN_SRC =$(wildcard $(PATH_TBN)/*.sv)
 TBN_SRC+=$(wildcard ../../../tbn/*.sv)
 TBN_DIF =$(filter-out $(TBN_PKG),$(TBN_SRC))
@@ -50,7 +51,7 @@ TGT=$(RTL:.sv=)
 
 all: $(TGT)
 
-compile: $(LIB) $(SIP) $(RTL) $(TBN)
+compile: $(LIB) $(SIP) $(RTL_PKG) $(TBN_PKG) $(RTL) $(TBN)
 	$(MODELSIM_BIN)/vlib work
 	$(MODELSIM_BIN)/vlog $(LIB) $(SIP) $(RTL) $(TBN)
 

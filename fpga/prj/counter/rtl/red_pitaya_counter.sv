@@ -98,7 +98,7 @@ module red_pitaya_counter
    // Clock for predelay and timeout
    logic [32-1:0]            counter_clock;
    // The current counts
-   wire [32-1:0]            counters_current_count [num_counters-1:0];
+   wire [32-1:0]             counters_current_count [num_counters-1:0];
    // The last completed count result
    logic [32-1:0]            counters_last_count [num_counters-1:0];
    // Reset the counters
@@ -120,15 +120,13 @@ module red_pitaya_counter
 
    // Current state of the counter state machine
    counter_state_t           counter_state;
-   counter_state_t           counter_state_buffer;
+   counter_state_t           counter_state_buf;
    // Indicates that the counter is not counting
    logic                     counting_stopped;
-   // The control command we just received
+   // The control command
    control_command_t         control_command;
    logic                     control_command_signal;
-   logic                     control_command_signal_ack;
-   logic                     control_command_signal_buffer;
-   logic                     control_command_signal_valid;
+   logic                     control_command_ack;
    // Counter -> Counter RAM channel
    logic [12-1:0]            cnt_counter_ram_addr;
    logic [18-1:0]            cnt_counter_ram_rdata [num_counters-1:0];
@@ -145,20 +143,8 @@ module red_pitaya_counter
    logic [8-1:0]             trigger_invert;
    // The polarity of the trigger signal
    logic                     trigger_polarity;
-   // ???
-   logic                     trigger_ack;
-   // Buffer for trigger signal
-   logic                     trigger_buffer;
-   // Whether a trigger signal just came in
-   logic                     trigger_edge_detected;
    // The gate signal
    logic                     gate_signal;
-   //
-   logic                     gate_ack;
-   //
-   logic                     gate_buffer;
-   //
-   logic                     gate_edge_detected;
 
    // --- System BUS communication ---
    logic                     sw_counter_ram_id;
@@ -167,7 +153,6 @@ module red_pitaya_counter
    logic [18-1:0]            sw_counter_ram_rdata [num_counters-1:0];
    logic [18-1:0]            sw_counter_ram_wdata [num_counters-1:0];
    logic                     sw_counter_ram_write_enable [num_counters-1:0];
-   logic [32-1:0]            sys_rdata_buf;
 
    // Generate counting modules
    generate
@@ -207,328 +192,267 @@ module red_pitaya_counter
                   counter_state == gatedCounting_waitForGateFall) ?
                  trigger_signal : '1;
 
-   // System bus read
-   assign sys_rdata = (sw_counter_ram_read_in_progress) ?
-                      {14'h0, sw_counter_ram_rdata[sw_counter_ram_id]} :
-                      sys_rdata_buf;
-
+   // --- Counter state machine ---
    always_ff @(posedge i_clk) begin
-      // Trigger/Gate
-      if (trigger_ack) trigger_buffer <= '0;
-      else if (trigger_signal) trigger_buffer <= '1;
-
-      if (gate_ack) gate_buffer <= '0;
-      else if (gate_signal) gate_buffer <= '1;
-
-      // Control command
-      if (control_command_signal_ack) control_command_signal_buffer <= '0;
-      else if (control_command_signal) control_command_signal_buffer <= '1;
-      control_command_signal <= '0;
-
       if (~i_rstn) begin
-         trigger_ack <= '0;
-         trigger_edge_detected <= '0;
-         trigger_buffer <= '0;
-         trigger_mask <= (8'h1 << (default_trigger_input-1));
-         trigger_invert <= 8'h0;
-         trigger_polarity <= '1;
-
-         counter_timeout <= '0;
-         counter_predelay <= '0;
-         counter_number_of_bins_in_use <= '0;
-         counter_number_of_bin_repetitions <= '0;
-         counter_gating_activated <= '0;
-         bin_repetition_index <= '0;
-
          counter_state <= idle;
-         control_command <= none;
-
-         sys_ack <= '0;
-         sys_err <= '0;
-         sw_counter_ram_id <= '0;
-         sw_counter_ram_read_in_progress <= '0;
-         sw_counter_ram_addr <= '0;
-         sw_counter_ram_write_enable <= {'0,'0};
-         sw_counter_ram_wdata <= {'0,'0};
+         control_command_ack <= 1'b0;
+         counting_stopped <= 1'b1;
+         counter_clock <= 32'b0;
+         counters_current_count <= {num_counters{32'b0}};
+         counters_last_count <= {num_counters{32'b0}};
+         counters_reset <= {num_counters{1'b1}};
+         bin_repetition_index <= 16'h0;
+         cnt_counter_ram_addr <= 12'h0;
+         cnt_counter_ram_write_enable <= {num_counters{1'b0}};
       end else begin
-         if (trigger_ack) begin
-            trigger_ack <= '0;
-            trigger_edge_detected <= '1;
-         end else begin
-            trigger_ack <= trigger_buffer;
-            trigger_edge_detected <= '0;
-         end
-
-         // --- Counter logic ---
-         if (trigger_ack) begin
-            trigger_ack <= '0;
-            trigger_edge_detected = '1;
-         end else begin
-            trigger_ack <= trigger_buffer;
-            trigger_edge_detected = '0;
-         end
-         if (gate_ack) begin
-            gate_ack <= '0;
-            gate_edge_detected = '1;
-         end else begin
-            gate_ack <= gate_buffer;
-            gate_edge_detected = '0;
-         end
-         if (control_command_signal_ack) begin
-            control_command_signal <= '0;
-            control_command_signal_valid = '1;
-         end else begin
-            control_command_signal <= control_command_signal_buffer;
-            control_command_signal_valid = '0;
-         end
-         counter_state_buffer = counter_state;
-         debug_clock <= debug_clock + 1;
-
-         if (control_command_signal_valid) begin
-            case (control_command)
-              gotoIdle:
-                counter_state_buffer = idle;
+         counter_state_buf = counter_state;
+         if (control_command_signal) begin
+            control_command_ack <= 1'b1;
+            casez (control_command)
+              gotoIdle: counter_state_buf = idle;
               reset: begin
-                 cnt_counter_ram_addr <= '0;
-                 bin_repetition_index <= '0;
-                 counter_state_buffer = idle;
-                 debug_clock <= '0;
+                 bin_repetition_index <= 16'h0;
+                 cnt_counter_ram_addr <= 12'h0;
+                 counters_last_count <= {num_counters{32'b0}};
+                 counter_state_buf = idle;
               end
-              countImmediately:
-                counter_state_buffer = immediateCounting_start;
-              countTriggered:
-                counter_state_buffer = triggeredCounting_waitForTrigger;
-              countGated:
-                counter_state_buffer = gatedCounting_waitForGateRise;
-              trigger:
-                trigger_edge_detected = '1;
-            endcase // case (control_command)
-            control_command <= none;
-         end // if (control_command_signal_valid)
-         counter_state = counter_state_buffer;
-         case (counter_state_buffer)
-            idle: begin
-               counting_stopped <= '1;
-               for (int i = 0; i < num_counters; i++) begin
-                  counters_reset[i] <= '1;
-                  cnt_counter_ram_write_enable[i] <= '0;
-               end
-            end
+              countImmediately: counter_state_buf = immediateCounting_start;
+              countTriggered: counter_state_buf = triggeredCounting_waitForTrigger;
+              countGated: counter_state_buf = gatedCounting_waitForGateRise;
+              trigger: if (counter_state_buf == triggeredCounting_waitForTrigger) begin
+                 counter_state_buf = triggeredCounting_waitForTimeout;
+              end
+            endcase // casez (control_command)
+         end // if (control_command_signal)
+         casez (counter_state_buf)
+           idle: begin
+              counting_stopped <= 1'b1;
+              counters_reset <= {num_counters{1'b1}};
+              cnt_counter_ram_write_enable <= {num_counters{1'b0}};
+           end
            immediateCounting_start: begin
-              counter_clock <= counter_timeout;
-              counting_stopped <= '0;
-              for (int i = 0; i < num_counters; i++) begin
-                 counters_reset[i] <= '0;
-              end
+              counter_clock = counter_timeout;
+              counting_stopped <= 1'b0;
+              counters_reset <= {num_counters{1'b0}};
+              counter_state_buf = immediateCounting_waitForTimeout;
            end
            immediateCounting_waitForTimeout: begin
-              if (counter_clock == '0) begin
-                 counting_stopped <= '1;
-                 for (int i = 0; i < num_counters; i++) begin
-                    counters_last_count <= counters_current_count;
-                    counters_reset[i] <= '1;
-                 end
-                 counter_state <= idle;
+              if (~counter_clock) begin
+                 counting_stopped <= 1'b1;
+                 counters_last_count <= counters_current_count;
+                 counters_reset <= {num_counters{1'b1}};
+                 counter_state_buf = idle;
               end else begin
                  counter_clock <= counter_clock - 1;
               end
            end
            triggeredCounting_waitForTrigger: begin
-              if (trigger_edge_detected) begin
-                 if (counter_predelay != '0) begin
-                    counter_clock <= counter_predelay - 1;
-                    counter_state <= triggeredCounting_predelay;
+              if (trigger_signal) begin
+                 if (counter_predelay != 0) begin
+                    counter_clock = counter_predelay;
+                    counter_state_buf = triggeredCounting_predelay;
                  end else begin
-                    counter_clock <= counter_timeout;
-                    counting_stopped <= '0;
-                    for (int i = 0; i < num_counters; i++)
-                      counters_reset[i] <= '0;
-                    counter_state <= triggeredCounting_waitForTimeout;
+                    counter_clock = counter_timeout;
+                    counting_stopped <= 1'b0;
+                    counters_reset <= {num_counters{1'b0}};
+                    counter_state_buf = triggeredCounting_waitForTimeout;
                  end
-              end // if (trigger_edge_detected)
+              end // if (trigger_signal)
            end // case: triggeredCounting_waitForTrigger
-           triggeredCounting_predelay: begin
+           triggeredCounting_waitForPredelay: begin
               if (counter_clock == 0) begin
-                 counter_clock <= counter_timeout;
-                 counting_stopped <= '0;
-                 for (int i = 0; i < num_counters; i++)
-                   counters_reset[i] <= '0;
-                 counter_state <= triggeredCounting_waitForTimeout;
+                 counter_clock = counter_timeout;
+                 counting_stopped <= 1'b0;
+                 counters_reset <= {num_counters{1'b0}};
+                 counter_state_buf = triggeredCounting_waitForTimeout;
               end else begin
                  counter_clock <= counter_clock - 1;
               end
-           end // case: triggeredCounting_predelay
+           end
            triggeredCounting_waitForTimeout: begin
-              if (counter_clock == '0) begin
-                 counting_stopped <= '1;
-                 for (int i = 0; i < num_counters; i++) begin
-                    counters_last_count <= counters_current_count;
-                    counters_reset[i] <= '1;
-                 end
-                 counter_state <= triggeredCounting_prestore;
+              if (counter_clock == 0) begin
+                 counting_stopped <= 1'b1;
+                 counters_last_count <= counters_current_count;
+                 counters_reset <= {num_counters{1'b1}};
+                 counter_state_buf = triggeredCounting_prestore;
               end else begin
                  counter_clock <= counter_clock - 1;
               end
-           end // case: triggeredCounting_waitForTimeout
+           end
            gatedCounting_waitForGateRise: begin
-              if (gate_edge_detected) begin
-                 counting_stopped <= '0;
-                 for (int i = 0; i < num_counters; i++)
-                   counters_reset[i] <= '0;
-                 counter_state <= gatedCounting_waitForGateFall;
+              if (gate_signal) begin
+                 counting_stopped <= 1'b0;
+                 counters_reset <= {num_counters{1'b0}};
+                 counter_state_buf = gatedCounting_waitForGateFall;
               end
            end
            gatedCounting_waitForGateFall: begin
-              if (gate_edge_detected) begin
-                 counting_stopped <= '1;
-                 for (int i = 0; i < num_counters; i++) begin
-                    counters_last_count <= counters_current_count;
-                    counters_reset[i] <= '1;
-                 end
-                 counter_state <= gatedCounting_prestore;
+              if (~gate_signal) begin
+                 counting_stopped <= 1'b1;
+                 counters_last_count <= counters_current_count;
+                 counters_reset <= {num_counters{1'b1}};
               end
+              counter_state_buf = gatedCounting_prestore;
            end
            triggeredCounting_prestore, gatedCounting_prestore: begin
-              for (int i = 0; i < num_counters; i++) begin
-                 cnt_counter_ram_wdata[i] <= cnt_counter_ram_rdata[i] +
-                       counters_last_count[i][18-1:0];
-                 cnt_counter_ram_write_enable[i] <= '1;
-              end
-              counter_state <= (counter_state_buffer == triggeredCounting_prestore) ?
-                               triggeredCounting_store :
-                               gatedCounting_store;
+              for (int i = 0; i < num_counters; i++)
+                cnt_counter_ram_wdata[i] <= cnt_counter_ram_rdata[i] + counter_last_count[i][18-1:0];
+              cnt_counter_ram_write_enable <= {num_counters{1'b1}};
+              counter_state_buf = (counter_state_buffer == triggeredCounting_prestore) ?
+                                  triggeredCounting_store :
+                                  gatedCounting_store;
            end
            triggeredCounting_store, gatedCounting_store: begin
-              for (int i = 0; i < num_counters; i++) begin
-                 cnt_counter_ram_write_enable[i] <= '0;
-              end
+              cnt_counter_ram_write_enable <= {num_counters{1'b0}};
               if (bin_repetition_index == counter_number_of_bin_repetitions) begin
-                 bin_repetition_index <= '0;
-                 if (cnt_counter_ram_addr == (counter_number_of_bins_in_use - '1))
-                   cnt_counter_ram_addr <= '0;
+                 bin_repetition_index <= 16'h0;
+                 if (cnt_counter_ram_addr == (counter_number_of_bins_in_use - 1))
+                   cnt_counter_ram_addr <= 12'h0;
                  else
-                   cnt_counter_ram_addr <= cnt_counter_ram_addr + '1;
+                   cnt_counter_ram_addr <= cnt_counter_ram_addr + 1;
               end else begin
-                 bin_repetition_index <= bin_repetition_index + '1;
+                 bin_repetition_index <= bin_repetition_index + 1;
               end
-              counter_state <= (counter_state_buffer == triggeredCounting_store) ?
-                               triggeredCounting_waitForTrigger :
-                               gatedCounting_waitForGateRise;
+              counter_state_buf = (counter_state_buffer == triggeredCounting_store) ?
+                                  triggeredCounting_waitForTrigger :
+                                  gatedCounting_waitForGateRise;
            end // case: triggeredCounting_store, gatedCounting_store
-           default:
-             counter_state <= idle;
-         endcase // case (counter_state_buffer)
+         endcase // casez (counter_state_buf)
 
-         // Bus logic
-         sys_ack <= (sys_wen || sys_ren);
-         sys_err <= '0;
-         sys_rdata_buf <= '0;
-         sw_counter_ram_write_enable <= {'0,'0};
-         sw_counter_ram_read_in_progress <= '0;
+         counter_state <= counter_state_buf;
+      end
+   end
 
-         unique if(sys_addr[19:16] == '0) begin
-            // Command request: All addresses below 0x10000 are command requests
-            if (sys_wen) begin
-               sys_ack <= '1;
-               unique case (sys_addr[15:0])
-                 'h0000: begin // Control command
-                    unique case (sys_wdata)
-                      0: control_command <= none;
-                      1: control_command <= gotoIdle;
-                      2: control_command <= reset;
-                      3: control_command <= countImmediately;
-                      4: control_command <= countTriggered;
-                      5: control_command <= countGated;
-                      6: control_command <= trigger;
-                      default: control_command <= none;
-                    endcase // unique case (sys_wdata)
-                    control_command_signal <= '1;
-                 end // case: 'h0000
-                 'h0004: counter_timeout <= sys_wdata; // Set timeout
-                 'h0010: counter_number_of_bins_in_use <= sys_wdata[12-1:0];
-                 'h0014: counter_number_of_bin_repetitions <= sys_wdata[16-1:0];
-                 'h0018: counter_predelay <= sys_wdata;
-                 'h001C: begin // trigger and gating settings
-                    trigger_mask <= sys_wdata[8-1:0];
-                    trigger_invert <= sys_wdata[16-1:8];
-                    trigger_polarity <= sys_wdata[16];
-                    //counter_split_bins <= sys_wdata[17];
-                    counter_gating_activated <= sys_wdata[18];
-                 end
-                 'h0030: debug_mode <= sys_wdata[0];
-                 default: begin
-                    sys_ack <= '0;
-                    sys_err <= '1;
-                 end
-               endcase
-            end else if (sys_ren) begin // if (sys_wen)
-               sys_ack <= '1;
-               unique case (sys_addr[15:0])
-                 'h0000: begin
-                    case (counter_state)
-                      idle:
-                        sys_rdata_buf <= 'h00000000;
-                      immediateCounting_start:
-                        sys_rdata_buf <= 'h00000001;
-                      immediateCounting_waitForTimeout:
-                        sys_rdata_buf <= 'h00000002;
-                      triggeredCounting_waitForTrigger:
-                        sys_rdata_buf <= 'h00000003;
-                      triggeredCounting_store:
-                        sys_rdata_buf <= 'h00000004;
-                      triggeredCounting_predelay:
-                        sys_rdata_buf <= 'h00000005;
-                      triggeredCounting_prestore:
-                        sys_rdata_buf <= 'h00000006;
-                      triggeredCounting_waitForTimeout:
-                        sys_rdata_buf <= 'h00000007;
-                      gatedCounting_waitForGateRise:
-                        sys_rdata_buf <= 'h00000008;
-                      gatedCounting_waitForGateFall:
-                        sys_rdata_buf <= 'h00000009;
-                      gatedCounting_prestore:
-                        sys_rdata_buf <= 'h0000000A;
-                      gatedCounting_store:
-                        sys_rdata_buf <= 'h0000000B;
-                    endcase // case (counter_state)
-                 end // case: 'h0000
-                 'h0004: sys_rdata_buf <= counter_timeout;
-                 'h0008: sys_rdata_buf <= counters_last_count[0];
-                 'h000C: sys_rdata_buf <= counters_last_count[1];
-                 'h0010: sys_rdata_buf <= {20'b0, counter_number_of_bins_in_use};
-                 'h0014: sys_rdata_buf <= {16'b0, counter_number_of_bin_repetitions};
-                 'h0018: sys_rdata_buf <= counter_predelay;
-                 'h001C: sys_rdata_buf <= {14'b0,
-                                           counter_gating_activated,
-                                           //counter_split_bins,
-                                           1'b0,
-                                           trigger_polarity,
-                                           trigger_invert,
-                                           trigger_mask};
-                 'h0020: sys_rdata_buf <= {20'b0, cnt_counter_ram_addr};
-                 'h0024: sys_rdata_buf <= {16'b0, bin_repetition_index};
-                 'h0028: sys_rdata_buf <= DNA;
-                 'h002C: sys_rdata_buf <= debug_clock;
-                 'h0030: sys_rdata_buf <= debug_mode;
-                 default: sys_rdata_buf <= 'h00000000;
-               endcase
-            end // if (sys_ren)
-         end else if (sys_addr[19:16] == '1) begin // if (sys_addr[19:16] == '0)
+   // --- System Bus write ---
+   always_ff @(posedge i_clk) begin
+      if (control_command_ack) begin
+         control_command <= none;
+         control_command_signal <= 1'b0;
+      end
+      sw_counter_ram_write_enable <= {1'b0, 1'b0};
+
+      if (~i_rstn) begin
+         control_command <= none;
+         counter_timeout <= 32'd125; // 1µs default timeout
+         counter_number_of_bins_in_use <= 12'h1000;
+         counter_number_of_bin_repetitions <= 16'h0;
+         counter_predelay <= 32'h0;
+      end else if (sys_wen) begin
+         if(sys_addr[19:16] == 4'b0) begin
+            if (sys_addr[15:0] == 16'h0) begin
+               casez (sys_wdata)
+                 32'h0: control_command <= none;
+                 32'h1: control_command <= gotoIdle;
+                 32'h2: control_command <= reset;
+                 32'h3: control_command <= countImmediately;
+                 32'h4: control_command <= countTriggered;
+                 32'h5: control_command <= countGated;
+                 32'h6: control_command <= trigger;
+                 default: control_command <= none;
+               endcase // unique case (sys_wdata)
+               control_command_signal <= 1'b1;
+            end // if (sys_addr[15:0] == 16'h0)
+            if (sys_addr[15:0] == 16'h4) counter_timeout <= sys_wdata;
+            if (sys_addr[15:0] == 16'h10) counter_number_of_bins_in_use <= sys_wdata[12-1:0];
+            if (sys_addr[15:0] == 16'h14) counter_number_of_bin_repetitions <= sys_wdata[16-1:0];
+            if (sys_addr[15:0] == 16'h18) counter_predelay <= sys_wdata;
+            if (sys_addr[15:0] == 16'h1C) begin
+               trigger_mask <= sys_wdata[8-1:0];
+               trigger_invert <= sys_wdata[16-1:8];
+               trigger_polarity <= sys_wdata[16];
+               //counter_split_bins <= sys_wdata[17];
+               counter_gating_activated <= sys_wdata[18];
+            end
+            if (sys_addr[15:0] == 16'h30) debug_mode <= sys_wdata[0];
+         end else if (sys_addr[15] == 1'b0) begin // if (sys_addr[19:16] == 4'b0)
+            sw_counter_ram_wdata[sys_addr[14]] <= sys_wdata[18-1:0];
+            sw_counter_ram_write_enable[sys_addr[14]] <= 1'b1;
+         end
+      end // if (sys_wen)
+   end
+
+   // --- System Bus read  ---
+   wire sys_en;
+   assign sys_en = sys_wen | sys_ren;
+   always_ff @(posedge i_clk) begin
+      if (~i_rstn) begin
+         sys_err <= 1'b0;
+         sys_ack <= 1'b0;
+         sw_counter_ram_read_in_progress <= 1'b0;
+      end else begin
+         if (sw_counter_ram_read_in_progress) begin
+            sys_ack <= sys_en;
+            sys_rdata <= {24{1'b0}, sw_counter_ram_rdata[sw_counter_ram_id]};
+            sw_counter_ram_read_in_progress <= 1'b0;
+         end
+
+         sys_err <= 1'b0;
+         if (sys_addr[19:16] == 4'b0) begin
+            casez (sys_addr[19:0])
+              20'h0000: begin
+                 sys_ack <= sys_en;
+                 case (counter_state)
+                   idle:
+                     sys_rdata_buf <= 32'h00;
+                   immediateCounting_start:
+                     sys_rdata_buf <= 32'h1;
+                   immediateCounting_waitForTimeout:
+                     sys_rdata_buf <= 32'h2;
+                   triggeredCounting_waitForTrigger:
+                     sys_rdata_buf <= 32'h3;
+                   triggeredCounting_store:
+                     sys_rdata_buf <= 32'h4;
+                   triggeredCounting_predelay:
+                     sys_rdata_buf <= 32'h5;
+                   triggeredCounting_prestore:
+                     sys_rdata_buf <= 32'h6;
+                   triggeredCounting_waitForTimeout:
+                     sys_rdata_buf <= 32'h7;
+                   gatedCounting_waitForGateRise:
+                     sys_rdata_buf <= 32'h8;
+                   gatedCounting_waitForGateFall:
+                     sys_rdata_buf <= 32'h9;
+                   gatedCounting_prestore:
+                     sys_rdata_buf <= 32'hA;
+                   gatedCounting_store:
+                     sys_rdata_buf <= 32'hB;
+                 endcase // case (counter_state)
+              end // case: 20'h0000
+              20'h0004: begin sys_ack <= sys_en; sys_rdata <= counter_timeout; end
+              20'h0008: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[0]; end
+              20'h000C: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[1]; end
+              20'h0010: begin sys_ack <= sys_en; sys_rdata <= {20{1'b0}, counter_number_of_bins_in_use}; end
+              20'h0014: begin sys_ack <= sys_en; sys_rdata <= {16{1'b0}, counter_number_of_bin_repetitions}; end
+              20'h0018: begin sys_ack <= sys_en; sys_rdata <= counter_predelay; end
+              20'h001C: begin sys_ack <= sys_en;
+                 sys_rdata <= {14'b0,
+                               counter_gating_activated,
+                               //counter_split_bins,
+                               1'b0,
+                               trigger_polarity,
+                               trigger_invert,
+                               trigger_mask};
+              end
+              20'h0020: begin sys_ack <= sys_en; sys_rdata <= {20{1'b0}, cnt_counter_ram_addr}; end
+              20'h0024: begin sys_ack <= sys_en; sys_rdata <= {16{1'b0}, bin_repetition_index}; end
+              20'h0028: begin sys_ack <= sys_en; sys_rdata <= DNA; end
+              20'h002C: begin sys_ack <= sys_en; sys_rdata <= debug_clock; end
+              20'h0030: begin sys_ack <= sys_en; sys_rdata <= debug_mode; end
+              default: begin sys_ack <= sys_en; sys_rdata <= 32'h0; end
+            endcase // casez (sys_addr[19:0])
+         end else if (sys_addr[15] == 1'b0) begin // if (sys_addr[16] == 1'b0)
             // RAM request: Counter RAM is mapped to offset 0x10000 (CH1) 0x14000 (CH2)
-            if (sys_addr[15] == '0 && (sys_ren == '1 || sys_wen == '1)) begin
-               sw_counter_ram_addr <= sys_addr[13:2];
-               sw_counter_ram_id <= sys_addr[14];
-               if (sys_wen) begin
-                  sw_counter_ram_wdata[sw_counter_ram_id] <= sys_wdata[18-1:0];
-                  sw_counter_ram_write_enable[sw_counter_ram_id] <= '1;
-                  sys_ack <= '1;
-               end else if (sys_ren) begin
-                  sw_counter_ram_read_in_progress <= '1;
-                  sys_ack <= '1;
-               end
-            end // if (sys_addr[15] == '0 and (sys_ren == '1 or sys_wen == '1))
-         end // if (sys_addr[19:16] == '1)
-      end // else: !if(i_rstn == 0)
-   end // always_ff @ (posedge i_clk)
+            sw_counter_ram_addr <= sys_addr[13:2];
+            sw_counter_ram_id <= sys_addr[14];
+            sw_counter_ram_read_in_progress <= 1'b1;
+         end else begin // if (sys_addr[15] == 1'b0)
+            sys_ack <= sys_en;
+            sys_rdata <= 32'h0;
+         end
+      end // else: !if(~i_rstn)
+   end // always @ (posedge i_clk)
+
+
 
 endmodule

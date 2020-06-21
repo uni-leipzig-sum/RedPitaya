@@ -526,7 +526,6 @@ red_pitaya_counter i_counter
     .i_clk         (adc_clk     ),
     .i_rstn        (adc_rstn    ),
     .inputs        ({gpio.i[14], gpio.i[22], gpio.i[15], gpio.i[23]}),
-    .o_led         (led_o       ),  // LED output for debugging
     // System bus
     .sys_addr      (sys[5].addr ),
     .sys_wdata     (sys[5].wdata),

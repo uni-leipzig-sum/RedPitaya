@@ -46,7 +46,6 @@ module red_pitaya_counter
     input logic                  i_clk,
     input logic                  i_rstn,
     input logic [num_inputs-1:0] inputs,
-    output logic [8-1:0]         o_led,
 
     // System bus
     input logic [ 32-1: 0]       sys_addr, // bus saddress
@@ -85,14 +84,6 @@ module red_pitaya_counter
    logic [32-1:0]            debug_clock;
    logic                     debug_mode;
 
-   /* Debug mode:
-    * In debug mode, we map the input signals 1-4 onto leds 5-8 respectively.
-    * This allows to visually debug the input signals.
-    */
-   generate
-      for (genvar i = 0; i < 4; i++)
-        assign o_led[4+i] = (debug_mode) ? inputs[i] : 1'b0;
-   endgenerate
 
    // --- Counter logic ---
    // Clock for predelay and timeout

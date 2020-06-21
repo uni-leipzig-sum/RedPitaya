@@ -318,7 +318,7 @@ module red_pitaya_counter
            end
            triggeredCounting_store, gatedCounting_store: begin
               for (int i = 0; i < num_counters; i++)
-                cnt_counter_ram_write_enable <= 1'b0;
+                cnt_counter_ram_write_enable[i] <= 1'b0;
               if (bin_repetition_index == counter_number_of_bin_repetitions) begin
                  bin_repetition_index <= 16'h0;
                  if (cnt_counter_ram_addr == (counter_number_of_bins_in_use - 1))

@@ -199,22 +199,24 @@ module red_pitaya_counter
          control_command_ack <= 1'b0;
          counting_stopped <= 1'b1;
          counter_clock <= 32'b0;
-         counters_current_count <= {num_counters{32'b0}};
-         counters_last_count <= {num_counters{32'b0}};
-         counters_reset <= {num_counters{1'b1}};
          bin_repetition_index <= 16'h0;
          cnt_counter_ram_addr <= 12'h0;
-         cnt_counter_ram_write_enable <= {num_counters{1'b0}};
+         for (int i = 0; i < num_counters; i++) begin
+            counters_last_count[i] <= 32'b0;
+            counters_reset[i] <= 1'b1;
+            cnt_counter_ram_write_enable[i] <= 1'b0;
+         end
       end else begin
          counter_state_buf = counter_state;
          if (control_command_signal) begin
             control_command_ack <= 1'b1;
-            casez (control_command)
+            case (control_command)
               gotoIdle: counter_state_buf = idle;
               reset: begin
                  bin_repetition_index <= 16'h0;
                  cnt_counter_ram_addr <= 12'h0;
-                 counters_last_count <= {num_counters{32'b0}};
+                 for (int i = 0; i < num_counters; i++)
+                   counters_last_count[i] <= 32'b0;
                  counter_state_buf = idle;
               end
               countImmediately: counter_state_buf = immediateCounting_start;
@@ -225,23 +227,27 @@ module red_pitaya_counter
               end
             endcase // casez (control_command)
          end // if (control_command_signal)
-         casez (counter_state_buf)
+         case (counter_state_buf)
            idle: begin
               counting_stopped <= 1'b1;
-              counters_reset <= {num_counters{1'b1}};
-              cnt_counter_ram_write_enable <= {num_counters{1'b0}};
+              for (int i = 0; i < num_counters; i++) begin
+                 counters_reset[i] <= 1'b1;
+                 cnt_counter_ram_write_enable[i] <= 1'b0;
+              end
            end
            immediateCounting_start: begin
               counter_clock = counter_timeout;
               counting_stopped <= 1'b0;
-              counters_reset <= {num_counters{1'b0}};
+              for (int i = 0; i < num_counters; i++)
+                counters_reset[i] <= 1'b0;
               counter_state_buf = immediateCounting_waitForTimeout;
            end
            immediateCounting_waitForTimeout: begin
               if (~counter_clock) begin
                  counting_stopped <= 1'b1;
                  counters_last_count <= counters_current_count;
-                 counters_reset <= {num_counters{1'b1}};
+                 for (int i = 0; i < num_counters; i++)
+                   counters_reset[i] <= 1'b1;
                  counter_state_buf = idle;
               end else begin
                  counter_clock <= counter_clock - 1;
@@ -255,7 +261,8 @@ module red_pitaya_counter
                  end else begin
                     counter_clock = counter_timeout;
                     counting_stopped <= 1'b0;
-                    counters_reset <= {num_counters{1'b0}};
+                    for (int i = 0; i < num_counters; i++)
+                      counters_reset[i] <= 1'b0;
                     counter_state_buf = triggeredCounting_waitForTimeout;
                  end
               end // if (trigger_signal)
@@ -264,7 +271,8 @@ module red_pitaya_counter
               if (counter_clock == 0) begin
                  counter_clock = counter_timeout;
                  counting_stopped <= 1'b0;
-                 counters_reset <= {num_counters{1'b0}};
+                 for (int i = 0; i < num_counters; i++)
+                   counters_reset[i] <= 1'b0;
                  counter_state_buf = triggeredCounting_waitForTimeout;
               end else begin
                  counter_clock <= counter_clock - 1;
@@ -274,7 +282,8 @@ module red_pitaya_counter
               if (counter_clock == 0) begin
                  counting_stopped <= 1'b1;
                  counters_last_count <= counters_current_count;
-                 counters_reset <= {num_counters{1'b1}};
+                 for (int i = 0; i < num_counters; i++)
+                   counters_reset[i] <= 1'b1;
                  counter_state_buf = triggeredCounting_prestore;
               end else begin
                  counter_clock <= counter_clock - 1;
@@ -283,7 +292,8 @@ module red_pitaya_counter
            gatedCounting_waitForGateRise: begin
               if (gate_signal) begin
                  counting_stopped <= 1'b0;
-                 counters_reset <= {num_counters{1'b0}};
+                 for (int i = 0; i < num_counters; i++)
+                   counters_reset[i] <= 1'b0;
                  counter_state_buf = gatedCounting_waitForGateFall;
               end
            end
@@ -291,20 +301,24 @@ module red_pitaya_counter
               if (~gate_signal) begin
                  counting_stopped <= 1'b1;
                  counters_last_count <= counters_current_count;
-                 counters_reset <= {num_counters{1'b1}};
+                 for (int i = 0; i < num_counters; i++)
+                   counters_reset[i] <= 1'b1;
               end
               counter_state_buf = gatedCounting_prestore;
            end
            triggeredCounting_prestore, gatedCounting_prestore: begin
-              for (int i = 0; i < num_counters; i++)
-                cnt_counter_ram_wdata[i] <= cnt_counter_ram_rdata[i] + counter_last_count[i][18-1:0];
-              cnt_counter_ram_write_enable <= {num_counters{1'b1}};
+              for (int i = 0; i < num_counters; i++) begin
+                 cnt_counter_ram_wdata[i] <= cnt_counter_ram_rdata[i] +
+                           counter_last_count[i][18-1:0];
+                 cnt_counter_ram_write_enable[i] <= 1'b1;
+              end
               counter_state_buf = (counter_state_buffer == triggeredCounting_prestore) ?
                                   triggeredCounting_store :
                                   gatedCounting_store;
            end
            triggeredCounting_store, gatedCounting_store: begin
-              cnt_counter_ram_write_enable <= {num_counters{1'b0}};
+              for (int i = 0; i < num_counters; i++)
+                cnt_counter_ram_write_enable <= 1'b0;
               if (bin_repetition_index == counter_number_of_bin_repetitions) begin
                  bin_repetition_index <= 16'h0;
                  if (cnt_counter_ram_addr == (counter_number_of_bins_in_use - 1))
@@ -330,7 +344,9 @@ module red_pitaya_counter
          control_command <= none;
          control_command_signal <= 1'b0;
       end
-      sw_counter_ram_write_enable <= {1'b0, 1'b0};
+      
+      for (int i = 0; i < num_counters; i++)
+        sw_counter_ram_write_enable[i] <= 1'b0;
 
       if (~i_rstn) begin
          control_command <= none;
@@ -383,7 +399,7 @@ module red_pitaya_counter
       end else begin
          if (sw_counter_ram_read_in_progress) begin
             sys_ack <= sys_en;
-            sys_rdata <= {24{1'b0}, sw_counter_ram_rdata[sw_counter_ram_id]};
+            sys_rdata <= {24'b0, sw_counter_ram_rdata[sw_counter_ram_id]};
             sw_counter_ram_read_in_progress <= 1'b0;
          end
 
@@ -422,8 +438,8 @@ module red_pitaya_counter
               20'h0004: begin sys_ack <= sys_en; sys_rdata <= counter_timeout; end
               20'h0008: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[0]; end
               20'h000C: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[1]; end
-              20'h0010: begin sys_ack <= sys_en; sys_rdata <= {20{1'b0}, counter_number_of_bins_in_use}; end
-              20'h0014: begin sys_ack <= sys_en; sys_rdata <= {16{1'b0}, counter_number_of_bin_repetitions}; end
+              20'h0010: begin sys_ack <= sys_en; sys_rdata <= {20'b0, counter_number_of_bins_in_use}; end
+              20'h0014: begin sys_ack <= sys_en; sys_rdata <= {16'b0, counter_number_of_bin_repetitions}; end
               20'h0018: begin sys_ack <= sys_en; sys_rdata <= counter_predelay; end
               20'h001C: begin sys_ack <= sys_en;
                  sys_rdata <= {14'b0,
@@ -434,8 +450,8 @@ module red_pitaya_counter
                                trigger_invert,
                                trigger_mask};
               end
-              20'h0020: begin sys_ack <= sys_en; sys_rdata <= {20{1'b0}, cnt_counter_ram_addr}; end
-              20'h0024: begin sys_ack <= sys_en; sys_rdata <= {16{1'b0}, bin_repetition_index}; end
+              20'h0020: begin sys_ack <= sys_en; sys_rdata <= {20'b0, cnt_counter_ram_addr}; end
+              20'h0024: begin sys_ack <= sys_en; sys_rdata <= {16'b0, bin_repetition_index}; end
               20'h0028: begin sys_ack <= sys_en; sys_rdata <= DNA; end
               20'h002C: begin sys_ack <= sys_en; sys_rdata <= debug_clock; end
               20'h0030: begin sys_ack <= sys_en; sys_rdata <= debug_mode; end

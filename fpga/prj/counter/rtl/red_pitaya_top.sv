@@ -171,7 +171,7 @@ logic signed [15-1:0] dac_a_sum, dac_b_sum;
 SBG_T [2-1:0]            asg_dat;
 
 // PID
-SBA_T [2-1:0]            pid_dat;
+//SBA_T [2-1:0]            pid_dat;
 
 // configuration
 logic                    digital_loop;
@@ -367,8 +367,8 @@ assign adc_dat[1] = digital_loop ? dac_b : {adc_dat_raw[1][14-1], ~adc_dat_raw[1
 ////////////////////////////////////////////////////////////////////////////////
 
 // Sumation of ASG and PID signal perform saturation before sending to DAC 
-assign dac_a_sum = asg_dat[0] + pid_dat[0];
-assign dac_b_sum = asg_dat[1] + pid_dat[1];
+   assign dac_a_sum = asg_dat[0]; //+ pid_dat[0];
+   assign dac_b_sum = asg_dat[1]; //+ pid_dat[1];
 
 // saturation
 assign dac_a = (^dac_a_sum[15-1:15-2]) ? {dac_a_sum[15-1], {13{~dac_a_sum[15-1]}}} : dac_a_sum[14-1:0];
@@ -498,6 +498,7 @@ red_pitaya_asg i_asg (
 //  MIMO PID controller
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
 red_pitaya_pid i_pid (
    // signals
   .clk_i           (adc_clk   ),  // clock
@@ -515,6 +516,7 @@ red_pitaya_pid i_pid (
   .sys_err         (sys[3].err  ),
   .sys_ack         (sys[3].ack  )
 );
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // counter
@@ -527,13 +529,13 @@ red_pitaya_counter i_counter
     .i_rstn        (adc_rstn    ),
     .inputs        ({gpio.i[14], gpio.i[22], gpio.i[15], gpio.i[23]}),
     // System bus
-    .sys_addr      (sys[5].addr ),
-    .sys_wdata     (sys[5].wdata),
-    .sys_wen       (sys[5].wen  ),
-    .sys_ren       (sys[5].ren  ),
-    .sys_rdata     (sys[5].rdata),
-    .sys_err       (sys[5].err  ),
-    .sys_ack       (sys[5].ack  )
+    .sys_addr      (sys[3].addr ),
+    .sys_wdata     (sys[3].wdata),
+    .sys_wen       (sys[3].wen  ),
+    .sys_ren       (sys[3].ren  ),
+    .sys_rdata     (sys[3].rdata),
+    .sys_err       (sys[3].err  ),
+    .sys_ack       (sys[3].ack  )
     );
 
 endmodule: red_pitaya_top

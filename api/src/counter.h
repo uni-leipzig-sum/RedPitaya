@@ -20,7 +20,7 @@
 #include <stdbool.h>
 
 // Base counter address
-static const int COUNTER_BASE_ADDR = 0x40500000;
+static const int COUNTER_BASE_ADDR = 0x00500000;
 static const int COUNTER_BASE_SIZE = 0x00100000;
 
 static const int COUNTER_CLOCK_FREQUENCY = 125000000;

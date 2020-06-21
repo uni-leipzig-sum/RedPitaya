@@ -109,7 +109,7 @@ module red_pitaya_counter
    // The number of cycles to wait before counting (immediate and trigger mode)
    logic [32-1:0]            counter_predelay;
    // The number of bins to fill. Once the last bin is full, start over with first bin
-   logic [12-1:0]            counter_number_of_bins_in_use;
+   logic [13-1:0]            counter_number_of_bins_in_use;
    // Accumulate (sum) N counts per bin
    logic [16-1:0]            counter_number_of_bin_repetitions;
    // For general gating, works in every mode
@@ -267,7 +267,7 @@ module red_pitaya_counter
                  end
               end // if (trigger_signal)
            end // case: triggeredCounting_waitForTrigger
-           triggeredCounting_waitForPredelay: begin
+           triggeredCounting_predelay: begin
               if (counter_clock == 0) begin
                  counter_clock = counter_timeout;
                  counting_stopped <= 1'b0;
@@ -309,10 +309,10 @@ module red_pitaya_counter
            triggeredCounting_prestore, gatedCounting_prestore: begin
               for (int i = 0; i < num_counters; i++) begin
                  cnt_counter_ram_wdata[i] <= cnt_counter_ram_rdata[i] +
-                           counter_last_count[i][18-1:0];
+                           counters_last_count[i][18-1:0];
                  cnt_counter_ram_write_enable[i] <= 1'b1;
               end
-              counter_state_buf = (counter_state_buffer == triggeredCounting_prestore) ?
+              counter_state_buf = (counter_state_buf == triggeredCounting_prestore) ?
                                   triggeredCounting_store :
                                   gatedCounting_store;
            end
@@ -328,7 +328,7 @@ module red_pitaya_counter
               end else begin
                  bin_repetition_index <= bin_repetition_index + 1;
               end
-              counter_state_buf = (counter_state_buffer == triggeredCounting_store) ?
+              counter_state_buf = (counter_state_buf == triggeredCounting_store) ?
                                   triggeredCounting_waitForTrigger :
                                   gatedCounting_waitForGateRise;
            end // case: triggeredCounting_store, gatedCounting_store
@@ -351,7 +351,7 @@ module red_pitaya_counter
       if (~i_rstn) begin
          control_command <= none;
          counter_timeout <= 32'd125; // 1µs default timeout
-         counter_number_of_bins_in_use <= 12'h1000;
+         counter_number_of_bins_in_use <= 13'h1000;
          counter_number_of_bin_repetitions <= 16'h0;
          counter_predelay <= 32'h0;
       end else if (sys_wen) begin
@@ -370,7 +370,7 @@ module red_pitaya_counter
                control_command_signal <= 1'b1;
             end // if (sys_addr[15:0] == 16'h0)
             if (sys_addr[15:0] == 16'h4) counter_timeout <= sys_wdata;
-            if (sys_addr[15:0] == 16'h10) counter_number_of_bins_in_use <= sys_wdata[12-1:0];
+            if (sys_addr[15:0] == 16'h10) counter_number_of_bins_in_use <= sys_wdata[13-1:0];
             if (sys_addr[15:0] == 16'h14) counter_number_of_bin_repetitions <= sys_wdata[16-1:0];
             if (sys_addr[15:0] == 16'h18) counter_predelay <= sys_wdata;
             if (sys_addr[15:0] == 16'h1C) begin
@@ -410,35 +410,35 @@ module red_pitaya_counter
                  sys_ack <= sys_en;
                  case (counter_state)
                    idle:
-                     sys_rdata_buf <= 32'h00;
+                     sys_rdata <= 32'h00;
                    immediateCounting_start:
-                     sys_rdata_buf <= 32'h1;
+                     sys_rdata <= 32'h1;
                    immediateCounting_waitForTimeout:
-                     sys_rdata_buf <= 32'h2;
+                     sys_rdata <= 32'h2;
                    triggeredCounting_waitForTrigger:
-                     sys_rdata_buf <= 32'h3;
+                     sys_rdata <= 32'h3;
                    triggeredCounting_store:
-                     sys_rdata_buf <= 32'h4;
+                     sys_rdata <= 32'h4;
                    triggeredCounting_predelay:
-                     sys_rdata_buf <= 32'h5;
+                     sys_rdata <= 32'h5;
                    triggeredCounting_prestore:
-                     sys_rdata_buf <= 32'h6;
+                     sys_rdata <= 32'h6;
                    triggeredCounting_waitForTimeout:
-                     sys_rdata_buf <= 32'h7;
+                     sys_rdata <= 32'h7;
                    gatedCounting_waitForGateRise:
-                     sys_rdata_buf <= 32'h8;
+                     sys_rdata <= 32'h8;
                    gatedCounting_waitForGateFall:
-                     sys_rdata_buf <= 32'h9;
+                     sys_rdata <= 32'h9;
                    gatedCounting_prestore:
-                     sys_rdata_buf <= 32'hA;
+                     sys_rdata <= 32'hA;
                    gatedCounting_store:
-                     sys_rdata_buf <= 32'hB;
+                     sys_rdata <= 32'hB;
                  endcase // case (counter_state)
               end // case: 20'h0000
               20'h0004: begin sys_ack <= sys_en; sys_rdata <= counter_timeout; end
               20'h0008: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[0]; end
               20'h000C: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[1]; end
-              20'h0010: begin sys_ack <= sys_en; sys_rdata <= {20'b0, counter_number_of_bins_in_use}; end
+              20'h0010: begin sys_ack <= sys_en; sys_rdata <= {19'b0, counter_number_of_bins_in_use}; end
               20'h0014: begin sys_ack <= sys_en; sys_rdata <= {16'b0, counter_number_of_bin_repetitions}; end
               20'h0018: begin sys_ack <= sys_en; sys_rdata <= counter_predelay; end
               20'h001C: begin sys_ack <= sys_en;

@@ -21,7 +21,11 @@ const char *COUNTER_STATE_NAMES[] = {
 	"triggeredCountingStore",
 	"triggeredCountingPredelay",
 	"triggeredCountingPrestore",
-	"triggeredCountingWaitForTimeout"
+	"triggeredCountingWaitForTimeout",
+  "gatedCounting_waitForGateRise",
+  "gatedCounting_waitForGateFall",
+  "gatedCounting_prestore",
+  "gatedCounting_store"
 };
 
 int Counter_GetState(int argc, char **argv, char **res, size_t *resLen)
@@ -37,7 +41,7 @@ int Counter_GetState(int argc, char **argv, char **res, size_t *resLen)
 		*resLen = safe_sprintf(res, "ERR: %s", rp_GetError(result));
 		return 1;
 	}
-	if (!(RP_idle<=state && state<=RP_triggeredCountingWaitForTimeout)) {
+	if (!(RP_idle<=state && state<=RP_gatedCounting_store)) {
 		RP_LOG(LOG_ERR, "COUNTER:STATE? Counter is in unknown state: %d.\n", state);
 		*resLen = safe_sprintf(res, "ERR: Unknown state %d", state);
 		return 1;

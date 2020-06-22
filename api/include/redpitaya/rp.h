@@ -1363,7 +1363,11 @@ int rp_GetRuntimeTempAlarm(rp_channel_t channel, bool *status);
     RP_triggeredCountingStore,
     RP_triggeredCountingPredelay,
     RP_triggeredCountingPrestore,
-    RP_triggeredCountingWaitForTimeout
+    RP_triggeredCountingWaitForTimeout,
+    RP_gatedCounting_waitForGateRise,
+    RP_gatedCounting_waitForGateFall,
+    RP_gatedCounting_prestore,
+    RP_gatedCounting_store
   } rp_counterState_t;
 
   static const int RP_COUNTER_NUM_COUNTERS = 2;

@@ -288,8 +288,8 @@ sys_bus_interconnect #(
 
 // silence unused busses
 generate
-for (genvar i=6; i<8; i++) begin: for_sys
-  sys_bus_stub sys_bus_stub_6_7 (sys[i]);
+for (genvar i=5; i<8; i++) begin: for_sys
+  sys_bus_stub sys_bus_stub_5_7 (sys[i]);
 end: for_sys
 endgenerate
 
@@ -527,7 +527,9 @@ red_pitaya_counter i_counter
     // signals
     .i_clk         (adc_clk     ),
     .i_rstn        (adc_rstn    ),
-    .inputs        ({gpio.i[14], gpio.i[22], gpio.i[15], gpio.i[23]}),
+
+    // pins:         DIO3_P      DIO7_P      DIO1_P     DIO5_P
+    .inputs        ({gpio.i[11], gpio.i[15], gpio.i[9], gpio.i[13]}),
     // System bus
     .sys_addr      (sys[3].addr ),
     .sys_wdata     (sys[3].wdata),

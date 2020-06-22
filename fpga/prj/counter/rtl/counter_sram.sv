@@ -11,13 +11,12 @@
 
 module counter_sram
   #(
-    int unsigned ADDR_WIDTH = 12,
-    int unsigned DATA_WIDTH = 18,
-    int unsigned DEPTH = 4096
+    parameter ADDR_WIDTH = 12,
+    parameter DATA_WIDTH = 18,
+    parameter DEPTH = 4096
     )
    (
     input logic                   i_clk,
-    input logic                   i_rstn,
     input logic [ADDR_WIDTH-1:0]  i_addr_a,
     input logic                   i_write_enable_a,
     input logic [DATA_WIDTH-1:0]  i_data_a,
@@ -34,32 +33,23 @@ module counter_sram
    logic [DATA_WIDTH-1:0]         write_buffer;
    logic                          write_enable;
 
-   always @ (posedge i_clk)
-     begin
-        if (i_rstn) begin
-           // Initialize memory to all zero
-           for (int i = 0; i < DEPTH; i++)
-             memory[i] = DATA_WIDTH'h0;
-           o_data_a <= DATA_WIDTH'h0;
-           o_data_b <= DATA_WIDTH'h0;
-        end else begin
-           if (i_write_enable_a) begin
-              write_addr = i_addr_a;
-              write_buffer = i_data_a;
-              write_enable = 1'b1;
-           end else if (i_write_enable_b) begin
-              write_addr = i_addr_b;
-              write_buffer = i_data_b;
-              write_enable = 1'b1;
-           end else write_enable = 1'b0;
+   always @ (posedge i_clk) begin
+	   if (i_write_enable_a) begin
+	      write_addr = i_addr_a;
+	      write_buffer = i_data_a;
+	      write_enable = 1'b1;
+	   end else if (i_write_enable_b) begin
+	      write_addr = i_addr_b;
+	      write_buffer = i_data_b;
+	      write_enable = 1'b1;
+	   end else write_enable = 1'b0;
 
-           if (write_enable) begin
-              memory[write_addr] <= write_buffer;
-           end
+	   if (write_enable) begin
+	      memory[write_addr] <= write_buffer;
+	   end
 
-           o_data_a <= memory[i_addr_a];
-           o_data_b <= memory[i_addr_b];
-        end
+	   o_data_a <= memory[i_addr_a];
+	   o_data_b <= memory[i_addr_b];
      end // always @ (posedge i_clk)
 
 endmodule

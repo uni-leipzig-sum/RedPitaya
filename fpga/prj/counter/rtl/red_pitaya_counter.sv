@@ -161,7 +161,6 @@ module red_pitaya_counter
            .ADDR_WIDTH(12), .DATA_WIDTH(18), .DEPTH(4096)
          ) counter_sram_inst (
            .i_clk(i_clk),
-           .i_rstn(i_rstn),
            .i_addr_a(cnt_counter_ram_addr),
            .i_write_enable_a(cnt_counter_ram_write_enable[i]),
            .i_data_a(cnt_counter_ram_wdata[i]),

@@ -10,7 +10,7 @@
 #   2. Memtest (stand alone memory test) ELF binary.
 #   4. Linux device tree source (dts).
 
-PRJ ?= logic
+PRJ ?= counter
 MODEL ?= Z10
 
 # build artefacts

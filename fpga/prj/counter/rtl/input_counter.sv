@@ -12,18 +12,24 @@ module input_counter (
 );
 
    logic input_buffer;
+   logic input_buffer2;
+   logic input_buffer3;
+   logic input_buffer4;
    logic [32-1:0] counts;
 
    assign o_count = counts;
 
+   // Two stage flip-flop stabilizer
    always_ff @(posedge i_clk) begin
       if (i_reset) begin
-         counts <= 32'h0;
-         input_buffer <= 1'b0;
+         counts = 32'h0;
       end else if (i_gate) begin
          input_buffer <= i_signal;
-         if (~input_buffer && i_signal) begin
-            counts <= counts + 1;
+         input_buffer2 <= input_buffer;
+         input_buffer3 <= input_buffer2;
+         input_buffer4 <= input_buffer3;
+         if (~input_buffer4 && input_buffer3) begin
+            counts = counts + 1'b1;
          end
       end
    end // always_ff @ (posedge clk)

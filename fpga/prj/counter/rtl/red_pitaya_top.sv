@@ -396,12 +396,14 @@ logic [  8-1: 0] exp_p_in , exp_n_in ;
 logic [  8-1: 0] exp_p_out, exp_n_out;
 logic [  8-1: 0] exp_p_dir, exp_n_dir;
 
+logic [ 8-1:0] fake_leds;
+
 red_pitaya_hk i_hk (
   // system signals
   .clk_i           (adc_clk ),  // clock
   .rstn_i          (adc_rstn),  // reset - active low
   // LED
-  .led_o           (  led_o                      ),  // LED output
+  .led_o           (  fake_leds                   ),  // LED output
   // global configuration
   .digital_loop    (digital_loop),
   // Expansion connector
@@ -525,11 +527,13 @@ red_pitaya_pid i_pid (
 red_pitaya_counter i_counter 
    (
     // signals
-    .i_clk         (adc_clk     ),
+    .i_clk         (adc_clk     ),  // 125MHz
+    .i_fast_clk    (dac_clk_2x  ),  // 250MHz
     .i_rstn        (adc_rstn    ),
 
-    // pins:         DIO3_P      DIO7_P      DIO1_P     DIO5_P
-    .inputs        ({gpio.i[11], gpio.i[15], gpio.i[9], gpio.i[13]}),
+    // pins:         DIO5_P      DIO1_P      DIO7_P     DIO3_P
+    .inputs        ({gpio.i[13], gpio.i[9], gpio.i[15], gpio.i[11]}),
+    .o_led         (led_o),
     // System bus
     .sys_addr      (sys[3].addr ),
     .sys_wdata     (sys[3].wdata),

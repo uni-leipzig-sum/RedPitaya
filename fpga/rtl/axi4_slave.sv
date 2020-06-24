@@ -63,7 +63,7 @@ module axi4_slave #(
 //---------------------------------------------------------------------------------
 
 logic           ack      ;
-logic [ 6-1: 0] ack_cnt  ;
+logic [12-1: 0] ack_cnt  ;
 
 logic           rd_do    ;
 logic [IW-1: 0] rd_arid  ;
@@ -118,7 +118,7 @@ if (~axi.ARESETn) begin
    axi.BRESP   <= 2'h0;
 end else begin
    axi.BVALID  <= wr_do && ack  ;
-   axi.BRESP   <= {(wr_error || ack_cnt[5]),1'b0} ;  // 2'b10 SLVERR    2'b00 OK
+   axi.BRESP   <= {(wr_error || ack_cnt[12-1]),1'b0} ;  // 2'b10 SLVERR    2'b00 OK
 end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -157,7 +157,7 @@ if (~axi.ARESETn) begin
 end else begin
    axi.RLAST   <= rd_do && ack  ;
    axi.RVALID  <= rd_do && ack  ;
-   axi.RRESP   <= {(rd_error || ack_cnt[5]),1'b0} ;  // 2'b10 SLVERR    2'b00 OK
+   axi.RRESP   <= {(rd_error || ack_cnt[12-1]),1'b0} ;  // 2'b10 SLVERR    2'b00 OK
    axi.RDATA   <= bus.rdata;
 end
 
@@ -167,17 +167,17 @@ end
 
 always_ff @(posedge axi.ACLK)
 if (~axi.ARESETn) begin
-   ack_cnt   <= 6'h0 ;
+   ack_cnt   <= 12'h0 ;
 end else begin
    if ((axi.ARVALID && axi.ARREADY) || (axi.AWVALID && axi.AWREADY))  // rd || wr request
-      ack_cnt <= 6'h1;
+      ack_cnt <= 12'h1;
    else if (ack)
-      ack_cnt <= 6'h0;
+      ack_cnt <= 12'h0;
    else if (|ack_cnt)
-      ack_cnt <= ack_cnt + 6'h1;
+      ack_cnt <= ack_cnt + 12'h1;
 end
 
-assign ack = bus.ack || ack_cnt[5] || (rd_do && rd_errorw) || (wr_do && wr_errorw); // bus acknowledge or timeout or error
+assign ack = bus.ack || ack_cnt[7] || (rd_do && rd_errorw) || (wr_do && wr_errorw); // bus acknowledge or timeout or error
 
 ////////////////////////////////////////////////////////////////////////////////
 // simple slave interface

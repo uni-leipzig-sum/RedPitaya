@@ -58,13 +58,17 @@ int counter_GetCounts(uint32_t buffer[COUNTER_NUM_COUNTERS]) {
 	return r;
 }
 int counter_SetNumberOfBins(uint32_t numBins) {
+        if (numBins < 1) numBins = 0;
+        else if (numBins > COUNTER_BINS) numBins = COUNTER_BINS-1;
+        else numBins--;
 	return cmn_SetValue(&counter_reg->numberOfBins, numBins,
 			COUNTER_REG_NUMBINS_MASK);
 }
 int counter_GetNumberOfBins(uint32_t *numBins) {
-	return cmn_GetValue(&counter_reg->numberOfBins, numBins,
-			COUNTER_REG_NUMBINS_MASK);
-
+        int res = cmn_GetValue(&counter_reg->numberOfBins, numBins,
+			       COUNTER_REG_NUMBINS_MASK);
+        *numBins++;
+        return res;
 }
 int counter_SetRepetitions(uint32_t repetitions) {
 	return cmn_SetValue(&counter_reg->repetitions, repetitions,

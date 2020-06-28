@@ -66,7 +66,7 @@ add_files -quiet                  [glob -nocomplain       $path_rtl/*_pkg.sv]
 add_files                         ../../$path_rtl
 add_files                               $path_rtl
 
-#read_xdc                          $path_sdc/red_pitaya.xdc
+read_xdc                          $path_sdc/red_pitaya.xdc
 read_xdc                          ../../$path_sdc/red_pitaya.xdc
 
 ################################################################################

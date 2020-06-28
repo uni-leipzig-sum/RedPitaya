@@ -4,17 +4,14 @@
  */
 
 module input_counter (
-   input wire            i_signal,
+   input logic           i_signal,
    input wire            i_clk,
    input wire            i_gate,
    input wire            i_reset,
    output logic [32-1:0] o_count
 );
 
-   logic input_buffer;
-   logic input_buffer2;
-   logic input_buffer3;
-   logic input_buffer4;
+   (* ASYNC_REG = "TRUE" *) logic input_meta, input_meta2, input_buffer, input_buffer_last;
    logic [32-1:0] counts;
 
    assign o_count = counts;
@@ -24,11 +21,11 @@ module input_counter (
       if (i_reset) begin
          counts = 32'h0;
       end else if (i_gate) begin
-         input_buffer <= i_signal;
-         input_buffer2 <= input_buffer;
-         input_buffer3 <= input_buffer2;
-         input_buffer4 <= input_buffer3;
-         if (~input_buffer4 && input_buffer3) begin
+         input_meta <= i_signal;
+         input_meta2 <= input_meta;
+         input_buffer <= input_meta2;
+         input_buffer_last <= input_buffer;
+         if (~input_buffer_last && input_buffer) begin
             counts = counts + 1'b1;
          end
       end

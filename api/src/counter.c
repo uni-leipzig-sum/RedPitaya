@@ -18,13 +18,13 @@
 
 static volatile counter_control_t *counter_reg = NULL;
 static volatile uint32_t *counter_bin_data[COUNTER_NUM_COUNTERS];
+static volatile uint32_t *duration_bin_data;
 
 int counter_Init() {
 	ECHECK(cmn_Map(COUNTER_BASE_SIZE, COUNTER_BASE_ADDR, (void** )&counter_reg));
-	counter_bin_data[0] = (uint32_t*) ((void*) counter_reg
-			+ COUNTER_BINS_CH1_OFFSET);
-	counter_bin_data[1] = (uint32_t*) ((void*) counter_reg
-			+ COUNTER_BINS_CH2_OFFSET);
+	counter_bin_data[0] = (uint32_t*) ((void*) counter_reg + COUNTER_BINS_CH1_OFFSET);
+	counter_bin_data[1] = (uint32_t*) ((void*) counter_reg + COUNTER_BINS_CH2_OFFSET);
+  duration_bin_data = (uint32_t*) ((void*) counter_reg + DURATION_BINS_OFFSET);
 	return RP_OK;
 }
 
@@ -47,13 +47,26 @@ int counter_SetCountingTime(uint32_t time) {
 int counter_GetCountingTime(uint32_t *time) {
 	return cmn_GetValue(&counter_reg->timeout, time, COUNTER_REG_TIMEOUT_MASK);
 }
-int counter_GetCounts(uint32_t buffer[COUNTER_NUM_COUNTERS]) {
+int counter_GetCounts(double buffer[COUNTER_NUM_COUNTERS]) {
 	int r = RP_OK;
-	for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) {
-		r = cmn_GetValue(&counter_reg->counts[i], &buffer[i],
+
+  uint32_t duration;
+  r = cmn_GetValue(&counter_reg->duration, &duration,
+                   COUNTER_REG_DURATION_MASK);
+  if (r != RP_OK) return r;
+  // Don't divide by 0
+  if (duration == 0) {
+    for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) buffer[i] = 0.0;
+    return r;
+  }
+
+  for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) {
+    uint32_t counts;
+		r = cmn_GetValue(&counter_reg->counts[i], &counts,
 				COUNTER_REG_COUNTS_MASK);
-		if (r != RP_OK)
+    if (r != RP_OK)
 			break;
+    buffer[i] = (double)counts/((double)duration)*(double)COUNTER_CLOCK_FREQUENCY;
 	}
 	return r;
 }
@@ -157,20 +170,27 @@ int counter_GetRepetitionCounter(uint32_t *repetitionCounter) {
 			COUNTER_REG_PREDELAY_MASK);
 }
 int counter_GetBinData(
-		uint32_t *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
+		double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
 	if (numBins > COUNTER_BINS)
 		numBins = COUNTER_BINS;
 	for (int i = 0; i < COUNTER_NUM_COUNTERS; i++)
-		for(int j = 0; j < numBins; j++)
-			buffers[i][j] = counter_bin_data[i][j];
+		for(int j = 0; j < numBins; j++) {
+      double duration = (double)duration_bin_data[j]/(double)COUNTER_CLOCK_FREQUENCY;
+      if (duration == 0.0)
+        buffers[i][j] = 0.0;
+      else
+        buffers[i][j] = (double)counter_bin_data[i][j]/duration;
+    }
 	return RP_OK;
 }
 int counter_ResetBinDataPartially(uint32_t numBins) {
 	if (numBins > COUNTER_BINS)
 		numBins = COUNTER_BINS;
 	for (int i = 0; i < COUNTER_NUM_COUNTERS; i++)
-		for (int j = 0; j < numBins; j++)
+		for (int j = 0; j < numBins; j++) {
 			counter_bin_data[i][j] = 0;
+      if (i == 0) duration_bin_data[j] = 0;
+    }
 	return RP_OK;
 }
 int counter_ResetBinData() {

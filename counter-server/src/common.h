@@ -19,6 +19,7 @@ typedef uint32_t size_t;
 #endif
 
 int join_uints(char **buf, size_t *bufsize, size_t offset, unsigned int *uints, size_t num_uints);
+int join_doubles(char **buf, size_t *bufsize, size_t offset, double *doubles, size_t num_doubles);
 
 // Safe implementation of sprintf. buffer will be allocated by the function
 // and must be freed by the caller.

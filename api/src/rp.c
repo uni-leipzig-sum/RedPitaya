@@ -831,7 +831,7 @@ int rp_CounterGetCountingTime(float *time) {
 		*time = (timeCycles + 1.f) / COUNTER_CLOCK_FREQUENCY;
 	return r;
 }
-int rp_CounterGetCounts(uint32_t buffer[COUNTER_NUM_COUNTERS]) {
+int rp_CounterGetCounts(double buffer[COUNTER_NUM_COUNTERS]) {
 	return counter_GetCounts(buffer);
 }
 int rp_CounterSetNumberOfBins(uint32_t numBins) {
@@ -893,7 +893,7 @@ int rp_CounterGetBinAddress(uint32_t *binAddress) {
 int rp_CounterGetRepetitionCounter(uint32_t *repetitionCounter) {
 	return counter_GetRepetitionCounter(repetitionCounter);
 }
-int rp_CounterGetBinData(uint32_t *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
+int rp_CounterGetBinData(double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
 	return counter_GetBinData(buffers, numBins);
 }
 int rp_CounterResetBinDataPartially(uint32_t numBins) {

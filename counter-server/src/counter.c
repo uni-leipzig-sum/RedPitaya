@@ -416,9 +416,9 @@ int Counter_GetBinData(int argc, char **argv, char **res, size_t *resLen)
 		*resLen = safe_sprintf(res, "ERR: Number of bins out of range: 1-%d", RP_COUNTER_BINS);
 		return 1;
 	}
-	uint32_t *binData[RP_COUNTER_NUM_COUNTERS];
+  double *binData[RP_COUNTER_NUM_COUNTERS];
     for(int i=0;i<RP_COUNTER_NUM_COUNTERS;i++)
-        binData[i] = malloc(sizeof(uint32_t)*numBins);
+        binData[i] = malloc(sizeof(double)*numBins);
     result = rp_CounterGetBinData(binData,numBins);
     if (RP_OK != result) {
 		RP_LOG(LOG_ERR, "COUNTER:BINS:DATA? Failed to get bin data: %s.\n", rp_GetError(result));
@@ -440,7 +440,7 @@ int Counter_GetBinData(int argc, char **argv, char **res, size_t *resLen)
 			buf[written+1] = 0;
 			written += 1;
 		}
-		result = join_uints(&buf, &buflen, written, binData[i], numBins);
+		result = join_doubles(&buf, &buflen, written, binData[i], numBins);
 		if (result < 0) {
 			goto err;
 		}
@@ -450,7 +450,7 @@ int Counter_GetBinData(int argc, char **argv, char **res, size_t *resLen)
 	*resLen = written;
 
 	return 0;
-	
+
  err:
 	for (int i = 0; i < RP_COUNTER_NUM_COUNTERS; i++)
 		free(binData[i]);
@@ -565,7 +565,7 @@ int Counter_Count(int argc, char **argv, char **res, size_t *resLen)
 
 int Counter_CountSingle(int argc, char **argv, char **res, size_t *resLen)
 {
-	uint32_t counts[RP_COUNTER_NUM_COUNTERS];
+	double counts[RP_COUNTER_NUM_COUNTERS];
 
 	int result = rp_CounterWaitForState(0/* 0 = idle state, see api/rpbase/src/counter.h */);
 	if (RP_OK != result) {
@@ -580,7 +580,7 @@ int Counter_CountSingle(int argc, char **argv, char **res, size_t *resLen)
 		return 1;
 	}
 
-	*resLen = join_uints(res, resLen, 0, counts, RP_COUNTER_NUM_COUNTERS);
+	*resLen = join_doubles(res, resLen, 0, counts, RP_COUNTER_NUM_COUNTERS);
 	if (*resLen < 0) {
 		RP_LOG(LOG_ERR, "COUNTER:COUNT:SING? Failed to construct response. Out of memory?\n");
 		*resLen = safe_sprintf(res, "ERR: OOM?");

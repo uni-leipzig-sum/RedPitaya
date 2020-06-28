@@ -28,6 +28,31 @@ int join_uints(char **buf, size_t *bufsize, size_t offset, unsigned int *uints, 
 	return written;
 }
 
+int join_doubles(char **buf, size_t *bufsize, size_t offset, double *doubles, size_t num_doubles)
+{
+	int written = 0;
+	for (size_t i = 0; i < num_doubles; i++) {
+		char *u = NULL;
+		int l;
+		l = safe_sprintf(&u, i==0?"%G":",%G", doubles[i]);
+		if (l < 0) {
+			free(*buf);
+			*buf = NULL;
+			return -1;
+		}
+		if (*bufsize-offset < written+l+1) {
+			*bufsize += 1024;
+			*buf = realloc(*buf, *bufsize);
+			if (*buf == NULL)
+				return -1;
+		}
+		memcpy(*buf+offset+written, u, l+1);
+		written += l;
+		free(u);
+	}
+	return written;
+}
+
 // Safe implementation of sprintf. buffer will be allocated by the function
 // and must be freed by the caller.
 // Returns the string length excluding the terminating zero char!

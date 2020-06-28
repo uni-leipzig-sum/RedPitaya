@@ -39,11 +39,11 @@ int rp_Init()
 {
     cmn_Init();
 
-    calib_Init();
+    /*calib_Init();
     hk_Init();
     ams_Init();
     generate_Init();
-    osc_Init();
+    osc_Init();*/
     counter_Init();
     // TODO: Place other module initializations here
 
@@ -63,11 +63,11 @@ int rp_CalibInit()
 int rp_Release()
 {
     counter_Release();
-    osc_Release();
+    /*osc_Release();
     generate_Release();
     ams_Release();
     hk_Release();
-    calib_Release();
+    calib_Release();*/
     cmn_Release();
     // TODO: Place other module releasing here (in reverse order)
     return RP_OK;
@@ -75,10 +75,10 @@ int rp_Release()
 
 int rp_Reset()
 {
-    rp_DpinReset();
+    /*rp_DpinReset();
     rp_AOpinReset();
     rp_GenReset();
-    rp_AcqReset();
+    rp_AcqReset();*/
     // TODO: Place other module resetting here (in reverse order)
     return 0;
 }

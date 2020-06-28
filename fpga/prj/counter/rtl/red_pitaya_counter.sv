@@ -475,7 +475,7 @@ module red_pitaya_counter
             sw_duration_ram_read_in_progress <= 16'h0;
          end else begin
              sys_err <= 1'b0;
-             if (sys_addr[19-1:0] <= 19'h30) begin
+             if (sys_addr[19-1:0] <= 19'h34) begin
                 case (sys_addr[19-1:0])
                   19'h0: begin
                      sys_ack <= sys_en;

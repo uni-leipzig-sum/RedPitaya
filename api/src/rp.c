@@ -902,10 +902,10 @@ int rp_CounterResetBinDataPartially(uint32_t numBins) {
 int rp_CounterResetBinData() {
 	return counter_ResetBinData();
 }
-int rp_CounterCountSingle(uint32_t counts[COUNTER_NUM_COUNTERS]) {
+int rp_CounterCountSingle(double counts[COUNTER_NUM_COUNTERS]) {
 	return counter_CountSingle(counts);
 }
-int rp_CounterCount(uint32_t *counts[COUNTER_NUM_COUNTERS], uint32_t numCounts) {
+int rp_CounterCount(double *counts[COUNTER_NUM_COUNTERS], uint32_t numCounts) {
 	return counter_Count(counts,numCounts);
 }
 int rp_CounterReset() {
@@ -935,7 +935,7 @@ int rp_CounterGetClock(uint32_t *clock) {
 int rp_CounterWaitForState(rp_counterState_t state) {
 	return counter_WaitForState(state);
 }
-int rp_CounterWaitAndReadAndStartCounting(uint32_t counts[COUNTER_NUM_COUNTERS]) {
+int rp_CounterWaitAndReadAndStartCounting(double counts[COUNTER_NUM_COUNTERS]) {
 	return counter_WaitAndReadAndStartCounting(counts);
 }
 

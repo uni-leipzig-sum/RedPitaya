@@ -520,9 +520,9 @@ int Counter_Count(int argc, char **argv, char **res, size_t *resLen)
 		return 1;
 	}
 	numCounts = atoi(argv[0]);
-	uint32_t *counts[RP_COUNTER_NUM_COUNTERS];
+	double *counts[RP_COUNTER_NUM_COUNTERS];
     for(int i=0;i<RP_COUNTER_NUM_COUNTERS;i++)
-        counts[i] = malloc(sizeof(uint32_t)*numCounts);
+        counts[i] = malloc(sizeof(double)*numCounts);
     int result = rp_CounterCount(counts,numCounts);
     if (RP_OK != result) {
 		RP_LOG(LOG_ERR, "COUNTER:COUNT? Failed to count: %s.\n", rp_GetError(result));
@@ -544,7 +544,7 @@ int Counter_Count(int argc, char **argv, char **res, size_t *resLen)
 			buf[written+1] = 0;
 			written += 1;
 		}
-		result = join_uints(&buf, &buflen, written, counts[i], numCounts);
+		result = join_doubles(&buf, &buflen, written, counts[i], numCounts);
 		if (result < 0) {
 			goto err;
 		}
@@ -755,7 +755,7 @@ int Counter_SetCountingTime(int argc, char **argv, char **res, size_t *resLen)
 
 int Counter_WaitAndReadAndStartCounting(int argc, char **argv, char **res, size_t *resLen)
 {
-	uint32_t counts[RP_COUNTER_NUM_COUNTERS];
+	double counts[RP_COUNTER_NUM_COUNTERS];
 
 	int result = rp_CounterWaitAndReadAndStartCounting(counts);
 	if (RP_OK != result) {
@@ -764,7 +764,7 @@ int Counter_WaitAndReadAndStartCounting(int argc, char **argv, char **res, size_
 		return 1;
 	}
 
-	*resLen = join_uints(res, resLen, 0, counts, RP_COUNTER_NUM_COUNTERS);
+	*resLen = join_doubles(res, resLen, 0, counts, RP_COUNTER_NUM_COUNTERS);
 	if (*resLen < 0) {
 		RP_LOG(LOG_ERR, "COUNTER:WRSC? Failed to construct response. Out of memory?\n");
 		*resLen = safe_sprintf(res, "ERR: OOM?");

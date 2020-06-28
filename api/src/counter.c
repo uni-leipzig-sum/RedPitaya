@@ -207,14 +207,14 @@ int counter_Reset() {
 	ECHECK(counter_SendCmd(reset));
 	return counter_WaitForState(idle);
 }
-int counter_CountSingle(uint32_t counts[COUNTER_NUM_COUNTERS]) {
-	uint32_t *buffer[COUNTER_NUM_COUNTERS];
+int counter_CountSingle(double counts[COUNTER_NUM_COUNTERS]) {
+	double *buffer[COUNTER_NUM_COUNTERS];
 	for (int i = 0; i < COUNTER_NUM_COUNTERS; i++)
 		buffer[i] = &counts[i];
 	return counter_Count(buffer, 1);
 }
-int counter_Count(uint32_t *counts[COUNTER_NUM_COUNTERS], uint32_t numCounts) {
-	uint32_t lastCounts[COUNTER_NUM_COUNTERS];
+int counter_Count(double *counts[COUNTER_NUM_COUNTERS], uint32_t numCounts) {
+	double lastCounts[COUNTER_NUM_COUNTERS];
 	for (uint32_t j = 0; j < numCounts; j++) {
 		ECHECK(counter_SendCmd(countImmediately));
 		ECHECK(counter_WaitForState(idle));
@@ -287,7 +287,7 @@ int counter_GetDNA(uint32_t *dna) {
 int counter_GetClock(uint32_t *clock) {
 	return cmn_GetValue(&counter_reg->clock, clock, COUNTER_REG_CLOCK_MASK);
 }
-int counter_WaitAndReadAndStartCounting(uint32_t counts[COUNTER_NUM_COUNTERS]) {
+int counter_WaitAndReadAndStartCounting(double counts[COUNTER_NUM_COUNTERS]) {
 	ECHECK(counter_WaitForState(idle));
 	ECHECK(counter_GetCounts(counts));
 	return counter_SendCmd(countImmediately);

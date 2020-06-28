@@ -140,13 +140,13 @@ int counter_GetRepetitionCounter(uint32_t *repetitionCounter);
 int counter_GetBinData(double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins);
 int counter_ResetBinDataPartially(uint32_t numBins);
 int counter_ResetBinData();
-int counter_CountSingle(uint32_t counts[COUNTER_NUM_COUNTERS]);
-int counter_Count(uint32_t *counts[COUNTER_NUM_COUNTERS], uint32_t numCounts);
+int counter_CountSingle(double counts[COUNTER_NUM_COUNTERS]);
+int counter_Count(double *counts[COUNTER_NUM_COUNTERS], uint32_t numCounts);
 int counter_Reset();
 int counter_GetDNA(uint32_t *dna);
 int counter_GetClock(uint32_t *clock);
 int counter_WaitForState(counter_control_state state);
-int counter_WaitAndReadAndStartCounting(uint32_t counts[COUNTER_NUM_COUNTERS]);
+int counter_WaitAndReadAndStartCounting(double counts[COUNTER_NUM_COUNTERS]);
 
 int counter_ReadMemory(uint32_t addr, uint32_t *result);
 int counter_SetDebugMode(bool enabled);

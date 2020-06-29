@@ -79,11 +79,11 @@ typedef struct counter_control_s {
 	uint32_t predelay;
 	uint32_t config;
 	uint32_t address;							// read-only
-	uint32_t repetition;						// read-only
-	uint32_t dna;								// read-only
+	uint32_t repetition;					// read-only
+	uint32_t dna;								  // read-only
 	uint32_t clock;								// read-only
   uint32_t debug_mode;
-  uint32_t duration;
+  uint32_t duration;            // read-only
 } counter_control_t;
 
 typedef enum {

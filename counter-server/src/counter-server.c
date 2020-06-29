@@ -273,15 +273,9 @@ int main(int argc, char *argv[])
   handleCloseChildEvents();
 
 
-  int result = rp_Init();
+  int result = rp_CounterInit();
   if (result != RP_OK) {
     RP_LOG(LOG_ERR, "Failed to initialize RP APP library: %s", rp_GetError(result));
-    return (EXIT_FAILURE);
-  }
-
-  result = rp_Reset();
-  if (result != RP_OK) {
-    RP_LOG(LOG_ERR, "Failed to reset RP APP: %s", rp_GetError(result));
     return (EXIT_FAILURE);
   }
 
@@ -362,7 +356,7 @@ int main(int argc, char *argv[])
 
   close(listenfd);
 
-  result = rp_Release();
+  result = rp_CounterRelease();
   if (result != RP_OK) {
     RP_LOG(LOG_ERR, "Failed to release RP App library: %s", rp_GetError(result));
   }

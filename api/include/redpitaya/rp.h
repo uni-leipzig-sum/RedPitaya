@@ -289,6 +289,8 @@ int rp_Init();
 
 int rp_CalibInit();
 
+int rp_CounterInit();
+
 /**
  * Releases the library resources. It must be called last, after library is not used anymore. Typically before
  * application exits.
@@ -296,6 +298,8 @@ int rp_CalibInit();
  * If the function is unsuccessful, the return value is any of RP_E* values that indicate an error.
  */
 int rp_Release();
+
+int rp_CounterRelease();
 
 /**
 * Resets all modules. Typically calles after rp_Init()

@@ -953,65 +953,14 @@ int rp_CounterWaitAndReadAndStartCounting(double counts[COUNTER_NUM_COUNTERS]) {
 	return counter_WaitAndReadAndStartCounting(counts);
 }
 
-struct CounterOutputParam {
-	pthread_t thread;
-	int running;
-	uint32_t MaxCounts;
-	uint32_t MinCounts;
-};
-
-static volatile struct CounterOutputParam CounterOutputParam =
-	{0,0,100,0};
-
-void *CountsOutput(void *args) {
-	float countingTime;
-	rp_CounterGetCountingTime(&countingTime);
-	rp_GenFreq(RP_CH_1, 0.f);
-	rp_GenAmp(RP_CH_1, 0.f);
-	rp_GenOutEnable(RP_CH_1);
-	while (CounterOutputParam.running == 1) {
-		uint32_t counts[COUNTER_NUM_COUNTERS];
-		counter_WaitAndReadAndStartCounting(counts);
-		float countrate = 0;
-		for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) {
-			countrate += counts[i] / countingTime;
-		}
-		if (CounterOutputParam.MaxCounts < countrate) {
-			countrate = CounterOutputParam.MaxCounts;
-		}
-		if (CounterOutputParam.MinCounts > countrate) {
-			countrate = CounterOutputParam.MinCounts;
-		}
-
-		for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) {
-			countrate += counts[i] / countingTime;
-		}
-		if (CounterOutputParam.MaxCounts < countrate) {
-			countrate = CounterOutputParam.MaxCounts;
-		}
-		if (CounterOutputParam.MinCounts > countrate) {
-			countrate = CounterOutputParam.MinCounts;
-		}
-
-		float value = (2 * (countrate - CounterOutputParam.MinCounts)
-				/ (CounterOutputParam.MaxCounts - CounterOutputParam.MinCounts)
-				- 1); // calculate the offset voltage from counts (max/min +/-1V)
-		rp_GenOffset(RP_CH_1, value);
-	}
-	return NULL;
-}
-
 int rp_CounterStartAnalogOutput( uint32_t MaxCount, uint32_t MinCount) {
-	CounterOutputParam.running=1;
-	CounterOutputParam.MaxCounts=MaxCount; // max expected count number for scaling the output
-	CounterOutputParam.MinCounts=MinCount;
-	return pthread_create((pthread_t*restrict)&CounterOutputParam.thread,NULL,CountsOutput,0);
+  // For backward compatibility only. Does nothing!
+	return RP_OK;
 }
 
 int rp_CounterStopAnalogOutput() {
-	CounterOutputParam.running=0;
-	rp_GenOutDisable(RP_CH_1);
-	return RP_OK;
+  // For backward compatibility only. Does nothing!
+  return RP_OK;
 }
 
 int rp_CounterReadMemory(uint32_t addr, uint32_t *result) {

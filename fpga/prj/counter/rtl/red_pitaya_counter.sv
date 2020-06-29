@@ -108,8 +108,8 @@ module red_pitaya_counter
    logic [32-1:0]            counter_timeout;
    // The number of cycles to wait before counting (immediate and trigger mode)
    logic [32-1:0]            counter_predelay;
-   // The number of bins to fill. Once the last bin is full, start over with first bin
-   logic [12-1:0]            counter_number_of_bins_in_use;
+   // The last bin to fill (0 indexed). Once the last bin is full, start over with first bin
+   logic [12-1:0]            counter_max_bin_address;
    // Accumulate (sum) N counts per bin
    logic [16-1:0]            counter_number_of_bin_repetitions;
 
@@ -252,7 +252,7 @@ module red_pitaya_counter
       end else begin
          debug_clock <= debug_clock + 1;
          // Check that current RAM address is within the limit of bins in use
-         if (cnt_counter_ram_addr >= counter_number_of_bins_in_use) begin
+         if (cnt_counter_ram_addr > counter_max_bin_address) begin
             cnt_counter_ram_addr = 12'h0;
          end
 
@@ -374,7 +374,7 @@ module red_pitaya_counter
            end
            triggeredCounting_store, gatedCounting_store: begin
               cnt_counter_ram_write_enable <= 1'b0;
-              if (cnt_counter_ram_addr == counter_number_of_bins_in_use)
+              if (cnt_counter_ram_addr == counter_max_bin_address)
                 cnt_counter_ram_addr <= 12'h0;
               else
                 cnt_counter_ram_addr <= cnt_counter_ram_addr + 12'h1;
@@ -400,7 +400,7 @@ module red_pitaya_counter
       if (~i_rstn) begin
          control_command <= none;
          counter_timeout <= 32'd125; // 1µs default timeout
-         counter_number_of_bins_in_use <= 12'hFFF;
+         counter_max_bin_address <= 12'hFFF;
          counter_number_of_bin_repetitions <= 16'h0;
          counter_predelay <= 32'h0;
          trigger_mask <= {num_inputs{1'b0}};
@@ -423,7 +423,7 @@ module red_pitaya_counter
                control_command_signal <= 1'b1;
             end // if (sys_addr[15:0] == 16'h0)
             if (sys_addr[19-1:0] == 19'h4) counter_timeout <= sys_wdata;
-            if (sys_addr[19-1:0] == 19'h10) counter_number_of_bins_in_use <= sys_wdata[12-1:0];
+            if (sys_addr[19-1:0] == 19'h10) counter_max_bin_address <= sys_wdata[12-1:0];
             if (sys_addr[19-1:0] == 19'h14) counter_number_of_bin_repetitions <= sys_wdata[16-1:0];
             if (sys_addr[19-1:0] == 19'h18) counter_predelay <= sys_wdata;
             if (sys_addr[19-1:0] == 19'h1C) begin
@@ -509,7 +509,7 @@ module red_pitaya_counter
                   19'h4: begin sys_ack <= sys_en; sys_rdata <= counter_timeout; end
                   19'h8: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[0]; end
                   19'hC: begin sys_ack <= sys_en; sys_rdata <= counters_last_count[1]; end
-                  19'h10: begin sys_ack <= sys_en; sys_rdata <= {20'b0, counter_number_of_bins_in_use}; end
+                  19'h10: begin sys_ack <= sys_en; sys_rdata <= {20'b0, counter_max_bin_address}; end
                   19'h14: begin sys_ack <= sys_en; sys_rdata <= {16'b0, counter_number_of_bin_repetitions}; end
                   19'h18: begin sys_ack <= sys_en; sys_rdata <= counter_predelay; end
                   19'h1C: begin sys_ack <= sys_en;

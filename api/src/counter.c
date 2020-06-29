@@ -80,7 +80,7 @@ int counter_SetNumberOfBins(uint32_t numBins) {
 int counter_GetNumberOfBins(uint32_t *numBins) {
         int res = cmn_GetValue(&counter_reg->numberOfBins, numBins,
 			       COUNTER_REG_NUMBINS_MASK);
-        *numBins++;
+        (*numBins)++;
         return res;
 }
 int counter_SetRepetitions(uint32_t repetitions) {

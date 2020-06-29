@@ -1,5 +1,4 @@
-# RedPitaya Operating System
-
+# Building the RedPitaya Operating System
 
 ## Prerequisits
 
@@ -115,3 +114,56 @@ sudo dd bs=4M if=/PATH/TO/THE/IMAGE/redpitaya_OS_XXX.img of=/dev/mmcblk0
 
 After some time (depending on the quality of the SD card), the microSD card is
 ready to be used. Insert it into the RedPitaya and off you go.
+
+
+# Using the RedPitaya counter
+
+## Components of the counter
+
+Note: This code is based on the original RedPitaya repository dating from Jun 11
+16:07:15 2020 (git commit hash 93c0866a9fcbbf9e7422ee8d7f77dae9f6bbc894). Since
+then, the RedPitaya codebase has probably evolved away from this present code
+and should not be taken as a reference! Many of the features included in this
+codebase are targeted to the general usecases of the RedPitaya board and could
+(or maybe should) be removed in order to clean up the present code.
+
+The counter consists of the following components:
+
+- The FPGA hardware implementation of a pulse counter (written in SystemVerilog)
+- An API located in librp used to interact with the hardware counter (written in c)
+- A network server running as a systemd service allowing remote control of the
+  counter using (ASCII) text commands (written in c)
+
+The code implementing the hardware counter is located in the subdirectory
+`fpga/prj/counter`. The structure of the fpga subdirectory is a bit complicated,
+as the original codebase allowed to create several projects (hence the directory
+name `prj`), each compiled to a separate `.bit` file (which can be loaded onto
+the FPGA). The main entry point (or top) file is
+`fpga/prj/counter/rtl/red_pitaya_top.sv`. It describes the interconnects with
+the system bus (whose address space is partitioned into 8 slices) and
+peripherals (such as GPIO and LEDs). At the end of the file, the
+`red_pitaya_counter` module is instantiated and linked to the system bus on
+partition number 3 (which corresponds to the address space
+0x400300000-0x4003FFFFF). This address space can be mapped in linux user space
+through a UIO device (located at `/dev/uio/api`). See the API code in
+api/src/common.c for details. The inner functioning of the hardware counter is
+described in the next section.
+
+The code implementing the API is located in the `api/src` subdirectory (you can
+find the public interface in `api/include/redpitaya/rp.h`). Compiling the API
+results in a shared library `librp.so` which is accessible on the RedPitaya
+device in the `/opt/redpitaya/lib` directory (the public interface header file
+can be found at `/opt/redpitaya/include/redpitaya/rp.h`). For the time beeing,
+the API implements a lot of functionality (taken over from the original
+RedPitaya code) targeted to the demo projects (e.g. signal generation,
+oscilloscope, etc..). Note that these functionalities require a specific
+hardware implementation which was stripped from the counter FPGA project. (At
+some point, we could/should clean up this code!)
+
+Finally, the `counter-server` is implemented in the `counter-server/src`
+subdirectory. It listens on TCP port `5000` and accepts SCPI-like commands. Note
+that the command set is not SCPI compliant, i.e. abbreviations are not allowed
+and commands are case sensitive. Dropping these features of a fully compliant
+SCPI command set allowed to write a much simpler and therefore faster and safer
+parser. In general, high speed, simplicity and stability has a higher design
+priority in this project than unnecessary usability features.

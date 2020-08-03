@@ -77,6 +77,8 @@ static command_map_t counter_commands[] = {
   { .cmd = "COUNTER:BINS:MAX?",   .handler = Counter_GetMaxBins,},
   /* Get the data of the first N bins */
   { .cmd = "COUNTER:BINS:DATA?",  .handler = Counter_GetBinData,},
+  /* Get count duration of the first N bins (in s)*/
+  { .cmd = "COUNTER:BINS:TIME?",  .handler = Counter_GetBinDuration,},
   /* Set the first N bins to 0 */
   { .cmd = "COUNTER:BINS:RESET",  .handler = Counter_ResetBinDataPartially,},
   /* Set all bins to 0 */

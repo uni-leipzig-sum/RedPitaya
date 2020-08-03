@@ -40,6 +40,7 @@ int Counter_GetGatedCounting(int argc, char **argv, char **res, size_t *resLen);
 int Counter_GetBinAddress(int argc, char **argv, char **res, size_t *resLen);
 int Counter_GetRepetitionCounter(int argc, char **argv, char **res, size_t *resLen);
 int Counter_GetBinData(int argc, char **argv, char **res, size_t *resLen);
+int Counter_GetBinDuration(int argc, char **argv, char **res, size_t *resLen);
 int Counter_ResetBinDataPartially(int argc, char **argv, char **res, size_t *resLen);
 int Counter_ResetBinData(int argc, char **argv, char **res, size_t *resLen);
 int Counter_Reset(int argc, char **argv, char **res, size_t *resLen);

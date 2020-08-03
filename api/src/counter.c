@@ -183,14 +183,26 @@ int counter_GetBinData(
     }
 	return RP_OK;
 }
+int counter_GetBinDuration(
+		double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
+	if (numBins > COUNTER_BINS)
+		numBins = COUNTER_BINS;
+	for (int i = 0; i < COUNTER_NUM_COUNTERS; i++) {
+		for (int j = 0; j < numBins; j++) {
+			double duration = (double)duration_bin_data[j]/(double)COUNTER_CLOCK_FREQUENCY;
+			buffers[i][j] = duration;
+		}
+	}
+	return RP_OK;
+}
 int counter_ResetBinDataPartially(uint32_t numBins) {
 	if (numBins > COUNTER_BINS)
 		numBins = COUNTER_BINS;
 	for (int i = 0; i < COUNTER_NUM_COUNTERS; i++)
 		for (int j = 0; j < numBins; j++) {
 			counter_bin_data[i][j] = 0;
-      if (i == 0) duration_bin_data[j] = 0;
-    }
+      			if (i == 0) duration_bin_data[j] = 0;
+		}
 	return RP_OK;
 }
 int counter_ResetBinData() {

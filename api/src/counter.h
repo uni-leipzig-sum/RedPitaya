@@ -61,14 +61,14 @@ static const int COUNTER_REG_DURATION_MASK		= 0xFFFFFFFF;
 
 static const int COUNTER_CONFIG_TRIGGER_MASK_MASK			= 0x0000000F;
 static const int COUNTER_CONFIG_TRIGGER_MASK_BIT_OFFSET		= 0;
-static const int COUNTER_CONFIG_TRIGGER_INVERT_MASK			= 0x00000F00;
-static const int COUNTER_CONFIG_TRIGGER_INVERT_BIT_OFFSET	= 8;
-static const int COUNTER_CONFIG_TRIGGER_POLARITY_MASK		= 0x00010000;
-static const int COUNTER_CONFIG_TRIGGER_POLARITY_BIT_OFFSET	= 16;
-static const int COUNTER_CONFIG_SPLIT_BINS_MASK				= 0x00020000;
-static const int COUNTER_CONFIG_SPLIT_BINS_BIT_OFFSET		= 17;
-static const int COUNTER_CONFIG_GATED_COUNTING_MASK			= 0x00040000;
-static const int COUNTER_CONFIG_GATED_COUNTING_BIT_OFFSET	= 18;
+static const int COUNTER_CONFIG_TRIGGER_INVERT_MASK			= 0x000000F0;
+static const int COUNTER_CONFIG_TRIGGER_INVERT_BIT_OFFSET	= 4;
+static const int COUNTER_CONFIG_TRIGGER_POLARITY_MASK		= 0x00000100;
+static const int COUNTER_CONFIG_TRIGGER_POLARITY_BIT_OFFSET	= 8;
+static const int COUNTER_CONFIG_SPLIT_BINS_MASK				= 0x00000200;
+static const int COUNTER_CONFIG_SPLIT_BINS_BIT_OFFSET		= 9;
+static const int COUNTER_CONFIG_GATED_COUNTING_MASK			= 0x00000400;
+static const int COUNTER_CONFIG_GATED_COUNTING_BIT_OFFSET	= 10;
 
 typedef struct counter_control_s {
 	uint32_t control;
@@ -138,6 +138,7 @@ int counter_GetGating(bool *enabled);
 int counter_GetBinAddress(uint32_t *binAddress);
 int counter_GetRepetitionCounter(uint32_t *repetitionCounter);
 int counter_GetBinData(double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins);
+int counter_GetBinDuration(double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins);
 int counter_ResetBinDataPartially(uint32_t numBins);
 int counter_ResetBinData();
 int counter_CountSingle(double counts[COUNTER_NUM_COUNTERS]);

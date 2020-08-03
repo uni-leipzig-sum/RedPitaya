@@ -1397,6 +1397,7 @@ int rp_GetRuntimeTempAlarm(rp_channel_t channel, bool *status);
   int rp_CounterGetBinAddress(uint32_t *binAddress);
   int rp_CounterGetRepetitionCounter(uint32_t *repetitionCounter);
   int rp_CounterGetBinData(double *buffers[RP_COUNTER_NUM_COUNTERS], uint32_t numBins);
+  int rp_CounterGetBinDuration(double *buffers[RP_COUNTER_NUM_COUNTERS], uint32_t numBins);
   int rp_CounterResetBinDataPartially(uint32_t numBins);
   int rp_CounterResetBinData();
   int rp_CounterCountSingle(double counts[RP_COUNTER_NUM_COUNTERS]);

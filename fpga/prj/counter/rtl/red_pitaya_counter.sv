@@ -217,23 +217,6 @@ module red_pitaya_counter
    end
    endgenerate
 
-   // --- Input signal synchronization ---
-   always_ff @(posedge i_clk) begin
-      if (i_rstn) begin
-         inputs_meta <= inputs;
-         inputs_meta2 <= inputs_meta;
-         inputs_buffer <= inputs_meta2;
-
-         trigger_signal = ((((inputs_buffer ^ trigger_invert) & trigger_mask) == trigger_mask) == trigger_polarity) ?
-                          1'b1 : 1'b0;
-         if (counter_state == gatedCounting_waitForGateRise ||
-             counter_state == gatedCounting_waitForGateFall) begin
-            gate_signal = trigger_signal;
-         end else begin
-            gate_signal = 1'b1;
-         end
-     end
-   end
 
    // --- Counter state machine ---
    always_ff @(posedge i_clk) begin
@@ -258,6 +241,20 @@ module red_pitaya_counter
          cnt_counter_ram_write_enable <= 1'b0;
          counters_last_duration <= 32'b0;
       end else begin
+         // --- Input signal synchronization ---
+         inputs_meta <= inputs;
+         inputs_meta2 <= inputs_meta;
+         inputs_buffer <= inputs_meta2;
+
+         trigger_signal = ((((inputs_buffer ^ trigger_invert) & trigger_mask) == trigger_mask) == trigger_polarity) ?
+                          1'b1 : 1'b0;
+         if (counter_state == gatedCounting_waitForGateRise ||
+             counter_state == gatedCounting_waitForGateFall) begin
+            gate_signal = trigger_signal;
+         end else begin
+            gate_signal = 1'b1;
+         end
+
          debug_clock <= debug_clock + 1;
          // Check that current RAM address is within the limit of bins in use
          if (cnt_counter_ram_addr > counter_max_bin_address) begin

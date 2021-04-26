@@ -459,6 +459,64 @@ int Counter_GetBinData(int argc, char **argv, char **res, size_t *resLen)
 	return 1;
 }
 
+int Counter_GetBinDuration(int argc, char **argv, char **res, size_t *resLen)
+{
+	int result;
+	uint32_t numBins;
+    if (argc < 1) {
+		RP_LOG(LOG_ERR, "COUNTER:BINS:TIME? is missing first argument.\n");
+		*resLen = safe_sprintf(res, "ERR: Specify how many bins to read out.");
+		return 1;
+	}
+	numBins = atoi(argv[0]);
+	if (numBins < 1 || numBins > RP_COUNTER_BINS) {
+		RP_LOG(LOG_ERR, "COUNTER:BINS:TIME? number of bins out of range: %d (max = %d)\n", numBins, RP_COUNTER_BINS);
+		*resLen = safe_sprintf(res, "ERR: Number of bins out of range: 1-%d", RP_COUNTER_BINS);
+		return 1;
+	}
+  double *binData[RP_COUNTER_NUM_COUNTERS];
+    for(int i=0;i<RP_COUNTER_NUM_COUNTERS;i++)
+        binData[i] = malloc(sizeof(double)*numBins);
+    result = rp_CounterGetBinDuration(binData,numBins);
+    if (RP_OK != result) {
+		RP_LOG(LOG_ERR, "COUNTER:BINS:TIME? Failed to get bin duration: %s.\n", rp_GetError(result));
+		*resLen = safe_sprintf(res, "ERR: %s", rp_GetError(result));
+		goto err;
+	}
+
+	size_t buflen;
+	char *buf = malloc(buflen);
+	int written = 0;
+	for (int i = 0; i < RP_COUNTER_NUM_COUNTERS; i++) {
+		if (i > 0) {
+			if (buflen < written + 2) {
+				buflen += 1024;
+				buf = realloc(buf, buflen);
+				if (buf == NULL) goto err;
+			}
+			buf[written] = ',';
+			buf[written+1] = 0;
+			written += 1;
+		}
+		result = join_doubles(&buf, &buflen, written, binData[i], numBins);
+		if (result < 0) {
+			goto err;
+		}
+		written += result;
+	}
+	*res = buf;
+	*resLen = written;
+
+	return 0;
+
+ err:
+	for (int i = 0; i < RP_COUNTER_NUM_COUNTERS; i++)
+		free(binData[i]);
+	if (*res == NULL)
+		*resLen = safe_sprintf(res, "ERR: OOM?");
+	return 1;
+}
+
 int Counter_ResetBinDataPartially(int argc, char **argv, char **res, size_t *resLen)
 {
 	uint32_t numBins;

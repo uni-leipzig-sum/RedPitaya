@@ -32,7 +32,7 @@ module counter_sram
    logic [ADDR_WIDTH-1:0]         write_addr;
    logic [DATA_WIDTH-1:0]         write_buffer;
    logic                          write_enable;
-
+   
    // Initialize RAM to all zero
    initial begin
       for (int i = 0; i < DEPTH; i++) counter_memory[i] <= {DATA_WIDTH{1'b0}};
@@ -49,10 +49,10 @@ module counter_sram
 	      write_enable = 1'b1;
 	   end else write_enable = 1'b0;
 
-	   if (write_enable) begin
+       if (write_enable) begin
 	      counter_memory[write_addr] <= write_buffer;
 	   end
-
+       
 	   o_data_a <= counter_memory[i_addr_a];
 	   o_data_b <= counter_memory[i_addr_b];
      end // always @ (posedge i_clk)

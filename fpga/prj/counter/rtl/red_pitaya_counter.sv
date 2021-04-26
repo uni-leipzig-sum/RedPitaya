@@ -448,10 +448,10 @@ module red_pitaya_counter
                //counter_gating_activated <= sys_wdata[num_inputs+2];
             end
             if (sys_addr[19-1:0] == 19'h30) debug_mode <= sys_wdata[0];
-         end else if (sys_addr[19-1:0] >= 19'h10000 && sys_addr[19-1:0] < (19'h10000 + num_counters*19'h1000)) begin
+         end else if (sys_addr[19-1:0] >= 19'h10000 && sys_addr[19-1:0] < (19'h10000 + num_counters*19'h4000)) begin
             sw_counter_ram_wdata[sys_addr[14]] <= sys_wdata;
             sw_counter_ram_write_enable[sys_addr[14]] <= 1'b1;
-         end else if (sys_addr[19-1:0] >= (19'h10000 + (num_counters*19'h1000)) && sys_addr[19-1:0] < (19'h10000 + ((num_counters+1)*19'h1000))) begin
+         end else if (sys_addr[19-1:0] >= (19'h10000 + (num_counters*19'h4000)) && sys_addr[19-1:0] < (19'h10000 + ((num_counters+1)*19'h4000))) begin
             sw_duration_ram_wdata <= sys_wdata;
             sw_duration_ram_write_enable <= 1'b1;
          end

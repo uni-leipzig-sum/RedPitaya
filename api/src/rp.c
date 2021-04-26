@@ -910,6 +910,9 @@ int rp_CounterGetRepetitionCounter(uint32_t *repetitionCounter) {
 int rp_CounterGetBinData(double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
 	return counter_GetBinData(buffers, numBins);
 }
+int rp_CounterGetBinDuration(double *buffers[COUNTER_NUM_COUNTERS], uint32_t numBins) {
+	return counter_GetBinDuration(buffers, numBins);
+}
 int rp_CounterResetBinDataPartially(uint32_t numBins) {
 	return counter_ResetBinDataPartially(numBins);
 }

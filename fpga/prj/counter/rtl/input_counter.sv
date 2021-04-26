@@ -18,8 +18,12 @@ module input_counter (
 
    // Two stage flip-flop stabilizer
    always_ff @(posedge i_clk) begin
-      if (i_reset) begin
+      if (i_reset | ~i_gate) begin
          counts = 32'h0;
+         input_meta = 1'h0;
+         input_meta2 = 1'h0;
+         input_buffer = 1'h0;
+         input_buffer_last = 1'h0;
       end else if (i_gate) begin
          input_meta <= i_signal;
          input_meta2 <= input_meta;

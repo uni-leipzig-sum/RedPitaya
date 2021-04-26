@@ -158,7 +158,7 @@ module red_pitaya_counter
    logic [32-1:0]            sw_duration_ram_wdata;
    logic                     sw_duration_ram_write_enable;
    logic [16-1:0]            sw_duration_ram_read_in_progress;
-   
+
 
    // Generate counting modules
    generate
@@ -219,23 +219,26 @@ module red_pitaya_counter
 
    // --- Input signal synchronization ---
    always_ff @(posedge i_clk) begin
-      inputs_meta <= inputs;
-      inputs_meta2 <= inputs_meta;
-      inputs_buffer <= inputs_meta2;
+      if (i_rstn) begin
+         inputs_meta <= inputs;
+         inputs_meta2 <= inputs_meta;
+         inputs_buffer <= inputs_meta2;
 
-      trigger_signal = ((((inputs_buffer ^ trigger_invert) & trigger_mask) == trigger_mask) == trigger_polarity) ?
-                           1'b1 : 1'b0;
-      if (counter_state == gatedCounting_waitForGateRise ||
-          counter_state == gatedCounting_waitForGateFall) begin
-         gate_signal = trigger_signal;
-      end else begin
-         gate_signal = 1'b1;
-      end
+         trigger_signal = ((((inputs_buffer ^ trigger_invert) & trigger_mask) == trigger_mask) == trigger_polarity) ?
+                          1'b1 : 1'b0;
+         if (counter_state == gatedCounting_waitForGateRise ||
+             counter_state == gatedCounting_waitForGateFall) begin
+            gate_signal = trigger_signal;
+         end else begin
+            gate_signal = 1'b1;
+         end
+     end
    end
 
    // --- Counter state machine ---
    always_ff @(posedge i_clk) begin
       if (~i_rstn) begin
+         // Reset all state
          counter_state <= idle;
          control_command_ack <= 1'b0;
          counting_stopped <= 1'b1;
@@ -246,6 +249,11 @@ module red_pitaya_counter
          for (int i = 0; i < num_counters; i++) begin
             counters_last_count[i] <= 32'b0;
             counters_reset[i] <= 1'b1;
+         end
+         for (int i = 0; i < num_inputs; i++) begin
+            inputs_meta[i] <= 1'b0;
+            inputs_meta2[i] <= 1'b0;
+            inputs_buffer[i] <= 1'b0;
          end
          cnt_counter_ram_write_enable <= 1'b0;
          counters_last_duration <= 32'b0;
@@ -265,12 +273,13 @@ module red_pitaya_counter
                  cnt_counter_ram_addr <= 12'h0;
                  for (int i = 0; i < num_counters; i++)
                    counters_last_count[i] <= 32'b0;
+                 counters_last_duration <= 32'b0;
                  counter_state = idle;
               end
               countImmediately: begin counter_state = immediateCounting_start; end
               countTriggered: begin counter_state = triggeredCounting_waitForTrigger; end
               countGated: begin counter_state = gatedCounting_waitForGateRise; end
-              trigger: begin 
+              trigger: begin
                  if (counter_state == triggeredCounting_waitForTrigger) begin
                     counter_state = triggeredCounting_waitForTimeout;
                  end
@@ -282,6 +291,11 @@ module red_pitaya_counter
               counting_stopped <= 1'b1;
               for (int i = 0; i < num_counters; i++) begin
                  counters_reset[i] <= 1'b1;
+              end
+              for (int i = 0; i < num_inputs; i++) begin
+                 inputs_meta[i] <= 1'b0;
+                 inputs_meta2[i] <= 1'b0;
+                 inputs_buffer[i] <= 1'b0;
               end
               cnt_counter_ram_write_enable <= 1'b0;
            end
@@ -392,7 +406,7 @@ module red_pitaya_counter
          control_command <= none;
          control_command_signal <= 1'b0;
       end
-      
+
       for (int i = 0; i < num_counters; i++)
         sw_counter_ram_write_enable[i] <= 1'b0;
       sw_duration_ram_write_enable <= 1'b0;

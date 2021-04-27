@@ -11,7 +11,7 @@ module input_counter (
    output logic [32-1:0] o_count
 );
 
-   (* ASYNC_REG = "TRUE" *) logic input_meta, input_meta2, input_buffer, input_buffer_last;
+   logic signal_last;
    logic [32-1:0] counts;
 
    assign o_count = counts;
@@ -20,16 +20,10 @@ module input_counter (
    always_ff @(posedge i_clk) begin
       if (i_reset | ~i_gate) begin
          counts = 32'h0;
-         input_meta = 1'h0;
-         input_meta2 = 1'h0;
-         input_buffer = 1'h0;
-         input_buffer_last = 1'h0;
+         signal_last = 1'h0;
       end else if (i_gate) begin
-         input_meta <= i_signal;
-         input_meta2 <= input_meta;
-         input_buffer <= input_meta2;
-         input_buffer_last <= input_buffer;
-         if (~input_buffer_last && input_buffer) begin
+         signal_last <= i_signal;
+         if (~signal_last && i_signal) begin
             counts = counts + 1'b1;
          end
       end

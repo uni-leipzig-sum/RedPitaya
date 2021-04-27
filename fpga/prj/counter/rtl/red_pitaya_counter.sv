@@ -165,7 +165,7 @@ module red_pitaya_counter
       for (genvar i = 0; i < num_counters; i++) begin
          // Counter
          input_counter input_counter_inst (
-           .i_signal(inputs[i]),
+           .i_signal(inputs_buffer[i]),
            .i_clk(i_clk),
            .i_gate(1'b1), //(gate_signal),
            .i_reset(counters_reset[i]),
